@@ -1,0 +1,42 @@
+import customtkinter
+import tkinter
+from functools import partial
+
+
+def convertToGoldCost(skystoneAmount: int) -> int:
+    return int(round(skystoneAmount * 1691.04536 * 2))
+
+def convertToEstimatedCovenents(skystoneAmount: int) -> float:
+    return int(round(skystoneAmount * 0.006603509 * 2))
+
+def convertToEstimatedMystics(skystoneAmount: int) -> float:
+    return int(round(skystoneAmount * 0.001700646 * 2))
+
+class ShopRefreshViewModel:
+    def __init__(self):
+        # self.shopRefreshService = shopRefreshService
+
+        self.skystoneInputVar = tkinter.StringVar()
+        self.estimatedGoldMirrorVar = tkinter.StringVar(value="0")
+        self.estimatedCovenantsMirrorVar = tkinter.StringVar(value="0")
+        self.estimatedMysticsMirrorVar = tkinter.StringVar(value="0")
+
+        self.skystoneInputVar.trace_add("write", partial(self.onInputChange, self.skystoneInputVar, self.estimatedGoldMirrorVar, convertToGoldCost))
+        self.skystoneInputVar.trace_add("write", partial(self.onInputChange, self.skystoneInputVar, self.estimatedCovenantsMirrorVar, convertToEstimatedCovenents))
+        self.skystoneInputVar.trace_add("write", partial(self.onInputChange, self.skystoneInputVar, self.estimatedMysticsMirrorVar, convertToEstimatedMystics))
+    
+    def startRefresh(self) -> None:
+        pass
+        # self.shopRefreshService.start()
+
+    def onInputChange(self, inputStringVar, mirrorStringVar, convertCurrency, *args):
+        currentValue = inputStringVar.get()
+        if currentValue.isdigit():
+            skystones = int(currentValue)
+            result = convertCurrency(skystones)
+            mirrorStringVar.set(f"{result:,}")
+        else:
+            mirrorStringVar.set("0")
+
+
+    
