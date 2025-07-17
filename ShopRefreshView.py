@@ -12,8 +12,8 @@ class ShopRefreshView(customtkinter.CTkFrame):
         skystoneAmountLabel = customtkinter.CTkLabel(skystoneInputRowFrame, text="Enter the number of skystones you want to burn: ", font=("Arial", 14))
         skystoneAmountLabel.pack(side="left", padx=(0,10))
 
-        skystoneAmountEntry = customtkinter.CTkEntry(skystoneInputRowFrame, textvariable=self.viewModel.skystoneInputVar, validate="key", validatecommand=(self.register(self.isInputNumber), "%S"))
-        skystoneAmountEntry.pack(side="left")
+        self.skystoneAmountEntry = customtkinter.CTkEntry(skystoneInputRowFrame, textvariable=self.viewModel.skystoneInputVar, validate="key", validatecommand=(self.register(self.isInputNumber), "%S"))
+        self.skystoneAmountEntry.pack(side="left")
 
         resultsFrame = customtkinter.CTkFrame(self)
         resultsFrame.pack(pady=20)
@@ -22,8 +22,32 @@ class ShopRefreshView(customtkinter.CTkFrame):
         self.addRowToGrid(resultsFrame, "Estimated Covenants:", self.viewModel.estimatedCovenantsMirrorVar,"skyblue", 1)
         self.addRowToGrid(resultsFrame, "Estimated Mystics:", self.viewModel.estimatedMysticsMirrorVar,"red", 2)
 
-        startButton = customtkinter.CTkButton(self, text="Start Refresh", command=self.viewModel.startRefresh)
-        startButton.pack()
+        buttonsFrame = customtkinter.CTkFrame(self)
+        buttonsFrame.pack(pady=20, padx=20)
+
+        self.startButton = customtkinter.CTkButton(buttonsFrame, text="Start Refresh", command=self.startRefresh)
+        self.startButton.pack(side="left", padx=(0,10))
+        self.stopButton = customtkinter.CTkButton(buttonsFrame, text="Stop Refresh", command=self.stopRefresh)
+        self.stopButton.pack(side="left")
+
+        self.toggleWidgetState(self.stopButton)
+
+    def toggleWidgetState(self, widget):
+        currentWidgetState = widget.cget("state")
+        newWidgetState = "disabled" if currentWidgetState == "normal" else "normal"
+        widget.configure(state=newWidgetState)
+
+    def startRefresh(self) -> None:
+        self.toggleWidgetState(self.skystoneAmountEntry)
+        self.toggleWidgetState(self.startButton)
+        self.toggleWidgetState(self.stopButton)
+        self.viewModel.startRefresh()
+
+    def stopRefresh(self) -> None:
+        self.toggleWidgetState(self.skystoneAmountEntry)
+        self.toggleWidgetState(self.startButton)
+        self.toggleWidgetState(self.stopButton)
+        self.viewModel.stopRefresh()
 
     def isInputNumber(self, inputString: str) -> bool:
         return inputString.isdigit()

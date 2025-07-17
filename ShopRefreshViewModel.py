@@ -31,6 +31,9 @@ class ShopRefreshViewModel:
         if(currentSkystoneValue.isdigit()):
             self.shopRefreshService.start(int(currentSkystoneValue))
 
+    def stopRefresh(self) -> None:
+        self.shopRefreshService.stop()
+
     def onInputChange(self, inputStringVar, mirrorStringVar, convertCurrency, *args):
         currentValue = inputStringVar.get()
         if currentValue.isdigit():

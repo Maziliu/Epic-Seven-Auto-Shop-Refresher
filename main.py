@@ -8,7 +8,7 @@ import ShopRefreshService
 if __name__ == '__main__':
     customtkinter.set_appearance_mode("System")
     app = customtkinter.CTk()
-    app.geometry("1080x720")
+    app.geometry("540x360")
     app.title("E7 ADB Shop Refresh")
 
     service = ShopRefreshService.ShopRefreshService()
