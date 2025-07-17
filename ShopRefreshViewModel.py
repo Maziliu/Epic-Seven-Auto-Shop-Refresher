@@ -16,17 +16,17 @@ class ShopRefreshViewModel:
     def __init__(self, shopRefreshService):
         self.shopRefreshService = shopRefreshService
 
-        self.skystoneInputVar = tkinter.StringVar()
-        self.estimatedGoldMirrorVar = tkinter.StringVar(value="0")
-        self.estimatedCovenantsMirrorVar = tkinter.StringVar(value="0")
-        self.estimatedMysticsMirrorVar = tkinter.StringVar(value="0")
+        self.skystoneInputVariable = tkinter.StringVar()
+        self.estimatedGold = tkinter.StringVar(value="0")
+        self.estimatedCovenants = tkinter.StringVar(value="0")
+        self.estimatedMystics = tkinter.StringVar(value="0")
 
-        self.skystoneInputVar.trace_add("write", partial(self.onInputChange, self.skystoneInputVar, self.estimatedGoldMirrorVar, convertToGoldCost))
-        self.skystoneInputVar.trace_add("write", partial(self.onInputChange, self.skystoneInputVar, self.estimatedCovenantsMirrorVar, convertToEstimatedCovenents))
-        self.skystoneInputVar.trace_add("write", partial(self.onInputChange, self.skystoneInputVar, self.estimatedMysticsMirrorVar, convertToEstimatedMystics))
+        self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedGold, convertToGoldCost))
+        self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedCovenants, convertToEstimatedCovenents))
+        self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedMystics, convertToEstimatedMystics))
     
     def startRefresh(self) -> None:
-        currentSkystoneValue = self.skystoneInputVar.get()
+        currentSkystoneValue = self.skystoneInputVariable.get()
 
         if(currentSkystoneValue.isdigit()):
             self.shopRefreshService.start(int(currentSkystoneValue))

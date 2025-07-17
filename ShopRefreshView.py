@@ -12,15 +12,15 @@ class ShopRefreshView(customtkinter.CTkFrame):
         skystoneAmountLabel = customtkinter.CTkLabel(skystoneInputRowFrame, text="Enter the number of skystones you want to burn: ", font=("Arial", 14))
         skystoneAmountLabel.pack(side="left", padx=(0,10))
 
-        self.skystoneAmountEntry = customtkinter.CTkEntry(skystoneInputRowFrame, textvariable=self.viewModel.skystoneInputVar, validate="key", validatecommand=(self.register(self.isInputNumber), "%S"))
+        self.skystoneAmountEntry = customtkinter.CTkEntry(skystoneInputRowFrame, textvariable=self.viewModel.skystoneInputVariable, validate="key", validatecommand=(self.register(self.isInputNumber), "%S"))
         self.skystoneAmountEntry.pack(side="left")
 
         resultsFrame = customtkinter.CTkFrame(self)
         resultsFrame.pack(pady=20)
 
-        self.addRowToGrid(resultsFrame, "Esitmated Gold Cost:", self.viewModel.estimatedGoldMirrorVar, "yellow", 0)
-        self.addRowToGrid(resultsFrame, "Estimated Covenants:", self.viewModel.estimatedCovenantsMirrorVar,"skyblue", 1)
-        self.addRowToGrid(resultsFrame, "Estimated Mystics:", self.viewModel.estimatedMysticsMirrorVar,"red", 2)
+        self.addRowToGrid(resultsFrame, "Esitmated Gold Cost:", self.viewModel.estimatedGold, "yellow", 0)
+        self.addRowToGrid(resultsFrame, "Estimated Covenants:", self.viewModel.estimatedCovenants,"skyblue", 1)
+        self.addRowToGrid(resultsFrame, "Estimated Mystics:", self.viewModel.estimatedMystics,"red", 2)
 
         buttonsFrame = customtkinter.CTkFrame(self)
         buttonsFrame.pack(pady=20, padx=20)
