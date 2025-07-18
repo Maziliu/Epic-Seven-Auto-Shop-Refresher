@@ -4,7 +4,7 @@ import threading
 class ShopRefreshService:
     def __init__(self):
         self.e7ADBShopRefresh = None
-        self.observers = []
+        self.observerCallbacks = []
     
     def start(self, skystoneAmount: int) -> None:
         self.e7ADBShopRefresh = E7ADBShopRefresh(budget=skystoneAmount)
@@ -18,10 +18,10 @@ class ShopRefreshService:
             self.e7ADBShopRefresh.loop_active = False
 
     def attachObserver(self, callback) -> None:
-        self.observers.append(callback)
+        self.observerCallbacks.append(callback)
     
     def notifyObservers(self, data: dict) -> None:
-        for callback in self.observers:
+        for callback in self.observerCallbacks:
             callback(data)
             
     def onShopRefresh(self, data: dict) -> None:

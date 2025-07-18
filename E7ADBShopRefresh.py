@@ -55,7 +55,7 @@ class E7Inventory:
 
 class E7ADBShopRefresh:
     def __init__(self, tap_sleep:float = 0.5, budget=None, ip_port=None, debug=False):
-        self.observers = []
+        self.observerCallbacks = []
         self.loop_active = False
         self.end_of_refresh = True
         self.tap_sleep = tap_sleep
@@ -78,11 +78,11 @@ class E7ADBShopRefresh:
         data = {key: value.count for key, value in self.storage.inventory.items()}
         data["Refresh Count"] = self.refresh_count
         
-        for callback in self.observers:
+        for callback in self.observerCallbacks:
             callback(data)
     
     def attachObserver(self, callback):
-        self.observers.append(callback)
+        self.observerCallbacks.append(callback)
     
     def start(self):
         self.loop_active = True
