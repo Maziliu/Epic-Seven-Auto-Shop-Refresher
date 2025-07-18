@@ -1,4 +1,4 @@
-import customtkinter
+
 from tkinter import StringVar
 from ShopRefreshService import ShopRefreshService
 from functools import partial
@@ -35,14 +35,17 @@ class ShopRefreshViewModel:
         self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedCovenants, convertToEstimatedCovenents))
         self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedMystics, convertToEstimatedMystics))
     
+    def isValidSkystoneAmount(self) -> bool:
+        currentSkystoneValue = self.skystoneInputVariable.get()
+        return currentSkystoneValue.isdigit() and int(currentSkystoneValue) >= SKYSTONES_PER_REFRESH
+    
     def startRefresh(self) -> None:
         currentSkystoneValue = self.skystoneInputVariable.get()
-
-        if(currentSkystoneValue.isdigit()):
-            self.shopRefreshService.start(int(currentSkystoneValue))
+        self.shopRefreshService.start(int(currentSkystoneValue))
 
     def stopRefresh(self) -> None:
         self.shopRefreshService.stop()
+        self.skystoneInputVariable.set("")
 
     def onInputChange(self, inputStringVar: StringVar, mirrorStringVar: StringVar, convertCurrency: StringVar, *args) -> None:
         currentValue = inputStringVar.get()

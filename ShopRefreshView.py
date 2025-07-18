@@ -48,10 +48,11 @@ class ShopRefreshView(CTkFrame):
         widget.configure(state=newWidgetState)
 
     def startRefresh(self) -> None:
-        self.toggleWidgetState(self.skystoneAmountEntry)
-        self.toggleWidgetState(self.startButton)
-        self.toggleWidgetState(self.stopButton)
-        self.viewModel.startRefresh()
+        if(self.viewModel.isValidSkystoneAmount()):
+            self.toggleWidgetState(self.skystoneAmountEntry)
+            self.toggleWidgetState(self.startButton)
+            self.toggleWidgetState(self.stopButton)
+            self.viewModel.startRefresh()
 
     def stopRefresh(self) -> None:
         self.toggleWidgetState(self.skystoneAmountEntry)

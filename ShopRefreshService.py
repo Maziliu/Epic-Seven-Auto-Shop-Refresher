@@ -1,10 +1,11 @@
 from E7ADBShopRefresh import E7ADBShopRefresh
+from typing import Callable
 import threading
 
 class ShopRefreshService:
     def __init__(self):
         self.e7ADBShopRefresh = None
-        self.observerCallbacks = []
+        self.observerCallbacks: list[Callable[[dict], None]] = []
     
     def start(self, skystoneAmount: int) -> None:
         self.e7ADBShopRefresh = E7ADBShopRefresh(budget=skystoneAmount)
@@ -17,7 +18,7 @@ class ShopRefreshService:
             self.e7ADBShopRefresh.end_of_refresh = True
             self.e7ADBShopRefresh.loop_active = False
 
-    def attachObserver(self, callback) -> None:
+    def attachObserver(self, callback: Callable[[dict], None]) -> None:
         self.observerCallbacks.append(callback)
     
     def notifyObservers(self, data: dict) -> None:

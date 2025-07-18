@@ -5,10 +5,8 @@ from io import BytesIO
 import time
 
 from PIL import Image
-import threading
 import cv2
 import numpy as np
-import keyboard
 
 class E7Item:
     def __init__(self, image=None, price=0, count=0):
@@ -115,6 +113,7 @@ class E7ADBShopRefresh:
                     self.clickBuy(pos)
                     value.count += 1
                     brought.add(key)
+                    self.notifyObservers()
 
             if not self.loop_active: break
             #swipe
@@ -130,6 +129,7 @@ class E7ADBShopRefresh:
                 if pos is not None and key not in brought:
                     self.clickBuy(pos)
                     value.count += 1
+                    self.notifyObservers()
             
             if not self.loop_active: break
             if self.budget:
@@ -143,16 +143,7 @@ class E7ADBShopRefresh:
         
         self.end_of_refresh = True
         self.loop_active = False
-        if self.refresh_count*3 != self.budget: print('100%') 
-        self.printResult()
     
-    #helper function
-    def printResult(self):
-        print('\n---Result---')
-        for key, value in self.storage.inventory.items():
-            print(key, ':', value.count)
-        print('Skystone spent:', self.refresh_count*3)
-
     def updateScreenDimension(self):
         adb_process = subprocess.run([self.adb_path] + self.device_args + ['exec-out', 'screencap','-p'], stdout=subprocess.PIPE)
         byte_image = BytesIO(adb_process.stdout)
@@ -169,10 +160,6 @@ class E7ADBShopRefresh:
         pil_image = Image.open(byte_image)
         pil_image = np.array(pil_image)
         screenshot = cv2.cvtColor(pil_image, cv2.COLOR_BGR2GRAY)
-        # ims = cv2.resize(screenshot, (960, 540))
-        # cv2.imshow('image window', ims)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
         return screenshot
 
     def findItemPosition(self, screen_image, item_image):
@@ -234,95 +221,3 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run([self.adb_path] + self.device_args + ['shell', 'input', 'tap', str(x), str(y)])
         time.sleep(self.tap_sleep)
 
-def getDevices(print_output):
-        check_devices = subprocess.run([adb_path, 'devices'], capture_output=True, text=True)
-        if print_output: print(check_devices.stdout)
-        lines = check_devices.stdout.splitlines()
-        devices = []
-        for line in lines[1:-1]:
-            seq = line.split('\t')
-            devices.append(seq[0])
-        return devices
-
-if __name__ == '__main__':
-
-    #intro
-    print('Epic Seven Shop Refresh with ADB')
-    print('Before launching this application')
-    print('Make sure Epic Seven is opened and that ADB is turned on')
-    print('Ingame resolution should be set to 1920 x 1080')
-    print('(relaunch this application if the above conditions are not met)')
-    print()
-    print('It is normal for adb to take a few second to respond')
-    input('when you finish reading, press enter to continue!')
-
-    print()
-
-    if not os.path.isdir(os.path.join('adb-assets')):
-        print('adb-assets folder is missing!')
-        input('Press enter to exit ...')
-        sys.exit(0)
-
-    ip_port = None
-    adb_path = os.path.join('adb-assets', 'platform-tools', 'adb')
-    #use below to test ip port on google beta developer
-    #subprocess.run([adb_path, 'kill-server'])
-    devices = getDevices(False)
-
-    while(len(devices) == 0 or len(devices) > 1):
-        
-        print('ADB Setup')
-        devices = getDevices(True)
-        print('Type the ip and port of the device that you want to select or add')
-        print('By leaving it blank it wil default to 127.0.0.1:5555')
-        user_choice = input('Device: ') or 'localhost:5555'
-        if user_choice in devices:
-            ip_port = user_choice
-        else:
-            test_connection = subprocess.run([adb_path, 'connect', user_choice], capture_output=True, text=True)
-            print(test_connection.stdout)
-            test_res = test_connection.stdout.split(' ')
-            if test_res[0] == 'connected' and test_res[1] == 'to':
-                ip_port = user_choice
-                break
-            else:
-                print('Fail to connect, try again')
-    
-    debug = False
-    if input('Launch in debug mode? (yes/no): ').lower() == 'yes':
-        debug = True
-        print('Program will now run in debug mode and will buy friendship bookmarks for testing purpose')
-
-    else:
-        print('Running as normal')
-    print()
-
-    try:
-        tap_sleep = float(input('Tap sleep(in seconds) recommand 0.5: '))
-    except:
-        print('invalid input, default to tap sleep of 0.5 second')
-        tap_sleep = 0.5
-    print()
-    try:
-        budget = float(input('Amount of skystone that you want to spend: '))
-    except:
-        print('invalid input, default to 1000 skystone budget')
-        budget = 1000
-    print()
-    if budget >= 1000:
-            ev_cost = 1691.04536 * int(budget) * 2
-            ev_cov = 0.006602509 * int(budget) * 2
-            ev_mys = 0.001700646 * int(budget) * 2
-            print('Approximation(EV) based on current budget:')
-            print(f'Cost: {int(ev_cost):,} (make sure you have at least this much gold)')
-            print(f'Cov: {ev_cov:.1f}')
-            print(f'mys: {ev_mys:.1f}')
-            print()
-    input('Press enter to start!')
-    print('Press Esc to terminate anytime!')
-    print()
-    print('Progress:')
-    ADBSHOP = E7ADBShopRefresh(tap_sleep=tap_sleep, budget=budget, ip_port=ip_port, debug=debug)
-    ADBSHOP.start()
-    print()
-    input('press enter to exit...')
