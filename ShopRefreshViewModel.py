@@ -1,5 +1,5 @@
 import customtkinter
-import tkinter
+from tkinter import StringVar
 from ShopRefreshService import ShopRefreshService
 from functools import partial
 
@@ -20,10 +20,10 @@ class ShopRefreshViewModel:
     def __init__(self, shopRefreshService: ShopRefreshService):
         self.shopRefreshService = shopRefreshService
 
-        self.skystoneInputVariable = tkinter.StringVar()
-        self.estimatedGold = tkinter.StringVar(value="0")
-        self.estimatedCovenants = tkinter.StringVar(value="0")
-        self.estimatedMystics = tkinter.StringVar(value="0")
+        self.skystoneInputVariable = StringVar()
+        self.estimatedGold = StringVar(value="0")
+        self.estimatedCovenants = StringVar(value="0")
+        self.estimatedMystics = StringVar(value="0")
 
         self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedGold, convertToGoldCost))
         self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedCovenants, convertToEstimatedCovenents))
@@ -38,7 +38,7 @@ class ShopRefreshViewModel:
     def stopRefresh(self) -> None:
         self.shopRefreshService.stop()
 
-    def onInputChange(self, inputStringVar: tkinter.StringVar, mirrorStringVar: tkinter.StringVar, convertCurrency: tkinter.StringVar, *args) -> None:
+    def onInputChange(self, inputStringVar: StringVar, mirrorStringVar: StringVar, convertCurrency: StringVar, *args) -> None:
         currentValue = inputStringVar.get()
         if currentValue.isdigit():
             skystones = int(currentValue)

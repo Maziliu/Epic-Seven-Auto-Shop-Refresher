@@ -3,7 +3,6 @@ import os
 import sys
 from io import BytesIO
 import time
-import csv
 
 from PIL import Image
 import threading
@@ -54,27 +53,7 @@ class E7Inventory:
             sum += value.price * value.count
         return sum
 
-    def writeToCSV(self, duration, skystone_spent):
-        duration = round(duration, 2)
 
-        res_folder = 'ShopRefreshHistory'
-        if not os.path.exists(res_folder):
-            os.makedirs(res_folder)
-
-        history_file = 'ADB_History.csv'
-
-        path = os.path.join(res_folder, history_file)
-        if not os.path.isfile(path):
-            with open(path, 'w', newline='') as file:
-                writer = csv.writer(file)
-                column_name = ['Duration', 'Skystone spent', 'Gold spent']
-                column_name.extend(self.getName())
-                writer.writerow(column_name)
-        with open(path, 'a', newline='') as file:
-            writer = csv.writer(file)
-            data = [duration, skystone_spent, self.getTotalCost()]
-            data.extend(self.getCount())
-            writer.writerow(data)
 
 class E7ADBShopRefresh:
     def __init__(self, tap_sleep:float = 0.5, budget=None, ip_port=None, debug=False):
@@ -85,7 +64,6 @@ class E7ADBShopRefresh:
         self.ip_port = ip_port
         self.device_args = [] if ip_port is None else ['-s', ip_port]
         self.refresh_count = 0
-        self.keyboard_thread = threading.Thread(target=self.checkKeyPress)
         self.adb_path = os.path.join('adb-assets','platform-tools', 'adb')
         self.storage = E7Inventory()
         self.screenwidth = 1920
@@ -100,22 +78,13 @@ class E7ADBShopRefresh:
     def start(self):
         self.loop_active = True
         self.end_of_refresh = False
-        self.keyboard_thread.start()
         self.refreshShop()
-
-    #threads
-    def checkKeyPress(self):
-        while(self.loop_active and not self.end_of_refresh):
-            self.loop_active = not keyboard.is_pressed('esc')
-        self.loop_active = False
-        print('Shop refresh terminated!')
 
     def refreshShop(self):
         self.clickShop()
         #time needed for item to drop in after refresh (0.8)
         sliding_time = 1
         #stat track
-        start_time = time.time()
         milestone = self.budget//10
         #swipe location
         x1 = str(0.6250 * self.screenwidth)
@@ -152,13 +121,6 @@ class E7ADBShopRefresh:
                 if pos is not None and key not in brought:
                     self.clickBuy(pos)
                     value.count += 1
-
-            #print every 10% progress
-            if self.budget >= 30 and self.refresh_count*3 >= milestone:
-                sys.stdout.write(' ' * 80 + '\r')
-                sys.stdout.write(f'{int(milestone/self.budget*100)}% {self.storage.getStatusString()}\r')
-                sys.stdout.flush()
-                milestone += self.budget//10
             
             if not self.loop_active: break
             if self.budget:
@@ -171,8 +133,6 @@ class E7ADBShopRefresh:
         self.end_of_refresh = True
         self.loop_active = False
         if self.refresh_count*3 != self.budget: print('100%') 
-        duration = time.time()-start_time
-        self.storage.writeToCSV(duration=duration, skystone_spent=self.refresh_count*3)
         self.printResult()
     
     #helper function
