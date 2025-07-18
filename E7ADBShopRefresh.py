@@ -53,10 +53,9 @@ class E7Inventory:
             sum += value.price * value.count
         return sum
 
-
-
 class E7ADBShopRefresh:
     def __init__(self, tap_sleep:float = 0.5, budget=None, ip_port=None, debug=False):
+        self.observers = []
         self.loop_active = False
         self.end_of_refresh = True
         self.tap_sleep = tap_sleep
@@ -75,6 +74,16 @@ class E7ADBShopRefresh:
         if debug:
             self.storage.addItem('fb.jpg', 'Friendship bookmark', 18000)
 
+    def notifyObservers(self):
+        data = {key: value.count for key, value in self.storage.inventory.items()}
+        data["Refresh Count"] = self.refresh_count
+        
+        for callback in self.observers:
+            callback(data)
+    
+    def attachObserver(self, callback):
+        self.observers.append(callback)
+    
     def start(self):
         self.loop_active = True
         self.end_of_refresh = False
@@ -129,6 +138,8 @@ class E7ADBShopRefresh:
 
             self.clickRefresh()
             self.refresh_count += 1
+            
+            self.notifyObservers()
         
         self.end_of_refresh = True
         self.loop_active = False

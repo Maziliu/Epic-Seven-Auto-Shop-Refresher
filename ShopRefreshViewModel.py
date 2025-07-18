@@ -19,6 +19,7 @@ def convertToEstimatedMystics(skystoneAmount: int) -> float:
 class ShopRefreshViewModel:
     def __init__(self, shopRefreshService: ShopRefreshService):
         self.shopRefreshService = shopRefreshService
+        self.shopRefreshService.attachObserver(self.onShopRefresh)
 
         self.skystoneInputVariable = StringVar()
         self.estimatedGold = StringVar(value="0")
@@ -47,5 +48,6 @@ class ShopRefreshViewModel:
         else:
             mirrorStringVar.set("0")
 
-
+    def onShopRefresh(self, data: dict) -> None:
+        print(data)
     
