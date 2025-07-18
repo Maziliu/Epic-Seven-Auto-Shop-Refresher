@@ -18,12 +18,12 @@ class ShopRefreshView(CTkFrame):
         self.skystoneAmountEntry = CTkEntry(skystoneInputRowFrame, textvariable=self.viewModel.skystoneInputVariable, validate="key", validatecommand=(self.register(self.isInputNumber), "%S"))
         self.skystoneAmountEntry.pack(side="left")
 
-        resultsFrame = CTkFrame(self)
-        resultsFrame.pack(pady=PADDING_Y)
+        estimationsFrame = CTkFrame(self)
+        estimationsFrame.pack(pady=PADDING_Y)
 
-        self.addRowToGrid(resultsFrame, "Esitmated Gold Cost:", self.viewModel.estimatedGold, COLOR_ESTIMATED_GOLD, 0)
-        self.addRowToGrid(resultsFrame, "Estimated Covenants:", self.viewModel.estimatedCovenants, COLOR_ESTIMATED_COVENANTS, 1)
-        self.addRowToGrid(resultsFrame, "Estimated Mystics:", self.viewModel.estimatedMystics, COLOR_ESTIMATED_MYSTICS, 2)
+        self.addRowToGrid(estimationsFrame, "Esitmated Gold Cost:", self.viewModel.estimatedGold, COLOR_GOLD_COIN, 0)
+        self.addRowToGrid(estimationsFrame, "Estimated Covenants:", self.viewModel.estimatedCovenants, COLOR_COVENANTS, 1)
+        self.addRowToGrid(estimationsFrame, "Estimated Mystics:", self.viewModel.estimatedMystics, COLOR_MYSTICS, 2)
 
         buttonsFrame = CTkFrame(self)
         buttonsFrame.pack(pady=PADDING_Y, padx=PADDING_X)
@@ -34,6 +34,13 @@ class ShopRefreshView(CTkFrame):
         self.stopButton.pack(side="left")
 
         self.toggleWidgetState(self.stopButton)
+        
+        purchasedFrame = CTkFrame(self)
+        purchasedFrame.pack(pady=PADDING_Y)
+
+        self.addRowToGrid(purchasedFrame, "Skystones Spent:", self.viewModel.skystonesSpent, COLOR_SKYSTONES, 0)
+        self.addRowToGrid(purchasedFrame, "Covenants:", self.viewModel.covanentsPurchased, COLOR_COVENANTS, 1)
+        self.addRowToGrid(purchasedFrame, "Mystics:", self.viewModel.mysticsPurchased, COLOR_MYSTICS, 2)
 
     def toggleWidgetState(self, widget: CTkBaseClass) -> None:
         currentWidgetState = widget.cget("state")

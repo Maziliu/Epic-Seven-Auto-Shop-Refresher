@@ -6,6 +6,7 @@ from functools import partial
 ESTIMATED_GOLD_COST_PER_SKYSTONE = 3382.09072
 ESTIMATED_COVENANT_YIELD_PER_SKYSTONE = 0.013207018
 ESTIMATED_MYSTIC_YIELD_PER_SKYSTONE = 0.003401292
+SKYSTONES_PER_REFRESH = 3
 
 def convertToGoldCost(skystoneAmount: int) -> int:
     return int(round(skystoneAmount * ESTIMATED_GOLD_COST_PER_SKYSTONE))
@@ -25,6 +26,10 @@ class ShopRefreshViewModel:
         self.estimatedGold = StringVar(value="0")
         self.estimatedCovenants = StringVar(value="0")
         self.estimatedMystics = StringVar(value="0")
+        
+        self.skystonesSpent = StringVar(value="0")
+        self.covanentsPurchased = StringVar(value="0")
+        self.mysticsPurchased = StringVar(value="0")
 
         self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedGold, convertToGoldCost))
         self.skystoneInputVariable.trace_add("write", partial(self.onInputChange, self.skystoneInputVariable, self.estimatedCovenants, convertToEstimatedCovenents))
@@ -49,5 +54,7 @@ class ShopRefreshViewModel:
             mirrorStringVar.set("0")
 
     def onShopRefresh(self, data: dict) -> None:
-        print(data)
+        self.skystonesSpent.set(str(data['Refresh Count'] * SKYSTONES_PER_REFRESH))
+        self.covanentsPurchased.set(str(data['Covenant bookmark']))
+        self.mysticsPurchased.set(str(data['Mystic medal']))
     
