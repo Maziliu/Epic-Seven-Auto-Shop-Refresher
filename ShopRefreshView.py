@@ -1,38 +1,41 @@
-import customtkinter
+from Style import *
+from tkinter import StringVar
+from customtkinter import CTk, CTkBaseClass, CTkFrame, CTkLabel, CTkEntry, CTkButton
+from ShopRefreshViewModel import ShopRefreshViewModel
 
-class ShopRefreshView(customtkinter.CTkFrame):
-    def __init__(self, master, viewModel):
+class ShopRefreshView(CTkFrame):
+    def __init__(self, master: CTk, viewModel: ShopRefreshViewModel):
         super().__init__(master)
         self.viewModel = viewModel
         self.pack()
 
-        skystoneInputRowFrame = customtkinter.CTkFrame(self)
-        skystoneInputRowFrame.pack(pady=20, padx=20)
+        skystoneInputRowFrame = CTkFrame(self)
+        skystoneInputRowFrame.pack(pady=PADDING_Y, padx=PADDING_X)
 
-        skystoneAmountLabel = customtkinter.CTkLabel(skystoneInputRowFrame, text="Enter the number of skystones you want to burn: ", font=("Arial", 14))
-        skystoneAmountLabel.pack(side="left", padx=(0,10))
+        skystoneAmountLabel = CTkLabel(skystoneInputRowFrame, text="Enter the number of skystones you want to burn: ", font=APP_FONT)
+        skystoneAmountLabel.pack(side="left", padx=(0, LABEL_PADDING_X_RIGHT))
 
-        self.skystoneAmountEntry = customtkinter.CTkEntry(skystoneInputRowFrame, textvariable=self.viewModel.skystoneInputVariable, validate="key", validatecommand=(self.register(self.isInputNumber), "%S"))
+        self.skystoneAmountEntry = CTkEntry(skystoneInputRowFrame, textvariable=self.viewModel.skystoneInputVariable, validate="key", validatecommand=(self.register(self.isInputNumber), "%S"))
         self.skystoneAmountEntry.pack(side="left")
 
-        resultsFrame = customtkinter.CTkFrame(self)
-        resultsFrame.pack(pady=20)
+        resultsFrame = CTkFrame(self)
+        resultsFrame.pack(pady=PADDING_Y)
 
-        self.addRowToGrid(resultsFrame, "Esitmated Gold Cost:", self.viewModel.estimatedGold, "yellow", 0)
-        self.addRowToGrid(resultsFrame, "Estimated Covenants:", self.viewModel.estimatedCovenants,"skyblue", 1)
-        self.addRowToGrid(resultsFrame, "Estimated Mystics:", self.viewModel.estimatedMystics,"red", 2)
+        self.addRowToGrid(resultsFrame, "Esitmated Gold Cost:", self.viewModel.estimatedGold, COLOR_ESTIMATED_GOLD, 0)
+        self.addRowToGrid(resultsFrame, "Estimated Covenants:", self.viewModel.estimatedCovenants, COLOR_ESTIMATED_COVENANTS, 1)
+        self.addRowToGrid(resultsFrame, "Estimated Mystics:", self.viewModel.estimatedMystics, COLOR_ESTIMATED_MYSTICS, 2)
 
-        buttonsFrame = customtkinter.CTkFrame(self)
-        buttonsFrame.pack(pady=20, padx=20)
+        buttonsFrame = CTkFrame(self)
+        buttonsFrame.pack(pady=PADDING_Y, padx=PADDING_X)
 
-        self.startButton = customtkinter.CTkButton(buttonsFrame, text="Start Refresh", command=self.startRefresh)
-        self.startButton.pack(side="left", padx=(0,10))
-        self.stopButton = customtkinter.CTkButton(buttonsFrame, text="Stop Refresh", command=self.stopRefresh)
+        self.startButton = CTkButton(buttonsFrame, text="Start Refresh", command=self.startRefresh)
+        self.startButton.pack(side="left", padx=(0, LABEL_PADDING_X_RIGHT))
+        self.stopButton = CTkButton(buttonsFrame, text="Stop Refresh", command=self.stopRefresh)
         self.stopButton.pack(side="left")
 
         self.toggleWidgetState(self.stopButton)
 
-    def toggleWidgetState(self, widget):
+    def toggleWidgetState(self, widget: CTkBaseClass) -> None:
         currentWidgetState = widget.cget("state")
         newWidgetState = "disabled" if currentWidgetState == "normal" else "normal"
         widget.configure(state=newWidgetState)
@@ -52,6 +55,6 @@ class ShopRefreshView(customtkinter.CTkFrame):
     def isInputNumber(self, inputString: str) -> bool:
         return inputString.isdigit()
     
-    def addRowToGrid(self, frame: customtkinter.CTkFrame, labelText: str, valueVariable, valueColour: str, rowNumber: int) -> None:
-        customtkinter.CTkLabel(frame, text=labelText, font=("Arial", 14)).grid(row=rowNumber, column=0, sticky="w", padx=10, pady=5)
-        customtkinter.CTkLabel(frame, textvariable=valueVariable, font=("Arial", 14), text_color=valueColour).grid(row=rowNumber, column=1, sticky="w", padx=10, pady=5)
+    def addRowToGrid(self, parentFrame: CTkFrame, labelText: str, value: StringVar, valueColour: str, gridRowIndex: int) -> None:
+        CTkLabel(parentFrame, text=labelText, font=APP_FONT).grid(row=gridRowIndex, column=0, sticky="w", padx=GRID_PADDING_X, pady=GRID_PADDING_Y)
+        CTkLabel(parentFrame, textvariable=value, font=APP_FONT, text_color=valueColour).grid(row=gridRowIndex, column=1, sticky="w", padx=GRID_PADDING_X, pady=GRID_PADDING_Y)

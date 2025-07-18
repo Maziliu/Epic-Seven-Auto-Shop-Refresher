@@ -11,6 +11,7 @@ class ShopRefreshService:
         shopRefreshProcess.start()
 
     def stop(self) -> None:
-        self.e7ADBShopRefresh.end_of_refresh = True
-        self.e7ADBShopRefresh.loop_active = False
+        if self.e7ADBShopRefresh:
+            self.e7ADBShopRefresh.end_of_refresh = True
+            self.e7ADBShopRefresh.loop_active = False
 

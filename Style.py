@@ -1,0 +1,20 @@
+from typing import Tuple
+
+#APP
+FONT_FAMILY: str = "Arial"
+FONT_SIZE: int = 14
+APP_FONT: Tuple[str, int] = (FONT_FAMILY, FONT_SIZE)
+APP_APPEARANCE_MODE: str = "System"
+APP_WINDOW_RESOLUTION: str = "540x360"
+APP_TITLE: str = "E7 ADB Shop Refresh"
+
+#UI Elements
+PADDING_Y: int = 20
+PADDING_X: int = 20
+LABEL_PADDING_X_RIGHT: int = 10
+GRID_PADDING_X: int = 10
+GRID_PADDING_Y: int = 5
+
+COLOR_ESTIMATED_GOLD = "yellow"
+COLOR_ESTIMATED_COVENANTS = "skyblue"
+COLOR_ESTIMATED_MYSTICS = "red"

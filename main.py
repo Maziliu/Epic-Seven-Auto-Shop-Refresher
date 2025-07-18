@@ -1,18 +1,22 @@
 import customtkinter
-import tkinter
-from functools import partial
-import ShopRefreshView
-import ShopRefreshViewModel
-import ShopRefreshService
+from Style import APP_APPEARANCE_MODE, APP_WINDOW_RESOLUTION, APP_TITLE
+from ShopRefreshView import ShopRefreshView
+from ShopRefreshService import ShopRefreshService
+from ShopRefreshViewModel import ShopRefreshViewModel
 
 if __name__ == '__main__':
-    customtkinter.set_appearance_mode("System")
+    customtkinter.set_appearance_mode(APP_APPEARANCE_MODE)
     app = customtkinter.CTk()
-    app.geometry("540x360")
-    app.title("E7 ADB Shop Refresh")
+    app.geometry(APP_WINDOW_RESOLUTION)
+    app.title(APP_TITLE)
 
-    service = ShopRefreshService.ShopRefreshService()
-    viewmodel = ShopRefreshViewModel.ShopRefreshViewModel(service)
-    ShopRefreshView.ShopRefreshView(app, viewmodel)
+    service = ShopRefreshService()
+    viewmodel = ShopRefreshViewModel(service)
+    ShopRefreshView(app, viewmodel)
 
+    def onClose():
+        service.stop()
+        app.destroy()
+
+    app.protocol("WM_DELETE_WINDOW", onClose)
     app.mainloop()
