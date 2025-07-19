@@ -7,6 +7,7 @@ import time
 from PIL import Image
 import cv2
 import numpy as np
+from copy import deepcopy
 
 # Subprocesses were making windows and this supresses them
 if sys.platform == "win32":
@@ -117,7 +118,7 @@ class E7ADBShopRefresh:
             self.onCompletionCallback()
 
     def notifyObservers(self):
-        data = {key: value.count for key, value in self.storage.inventory.items()}
+        data = deepcopy(self.storage.inventory)
         data["Refresh Count"] = self.refresh_count
 
         for callback in self.observerCallbacks:

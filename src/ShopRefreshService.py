@@ -1,4 +1,4 @@
-from E7ADBShopRefresh import E7ADBShopRefresh
+from E7ADBShopRefresh import E7ADBShopRefresh, E7Item
 from typing import Callable
 import threading
 
@@ -33,9 +33,9 @@ class ShopRefreshService:
     def attachObserver(self, callback: Callable[[dict], None]) -> None:
         self.observerCallbacks.append(callback)
 
-    def notifyObservers(self, data: dict) -> None:
+    def notifyObservers(self, data: dict[str, E7Item | int]) -> None:
         for callback in self.observerCallbacks:
             callback(data)
 
-    def onShopRefresh(self, data: dict) -> None:
+    def onShopRefresh(self, data: dict[str, E7Item | int]) -> None:
         self.notifyObservers(data)

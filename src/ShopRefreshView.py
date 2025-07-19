@@ -2,6 +2,15 @@ from Style import *
 from tkinter import StringVar
 from customtkinter import CTk, CTkBaseClass, CTkFrame, CTkLabel, CTkEntry, CTkButton
 from ShopRefreshViewModel import ShopRefreshViewModel
+from dataclasses import dataclass
+
+
+@dataclass
+class DataRow:
+    parentFrame: CTkFrame
+    labelTitle: str
+    variable: StringVar
+    colour: str
 
 
 class ShopRefreshView(CTkFrame):
@@ -40,53 +49,58 @@ class ShopRefreshView(CTkFrame):
 
         estimationsFrame = CTkFrame(countersframe)
         estimationsFrame.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
-
-        self.addRowToGrid(
-            estimationsFrame,
-            "Estimated Gold Cost:",
-            self.viewModel.estimatedGold,
-            COLOR_GOLD,
-            0,
-        )
-        self.addRowToGrid(
-            estimationsFrame,
-            "Estimated Covenants:",
-            self.viewModel.estimatedCovenants,
-            COLOR_COVENANTS,
-            1,
-        )
-        self.addRowToGrid(
-            estimationsFrame,
-            "Estimated Mystics:",
-            self.viewModel.estimatedMystics,
-            COLOR_MYSTICS,
-            2,
-        )
-
         purchasedFrame = CTkFrame(countersframe)
         purchasedFrame.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
 
-        self.addRowToGrid(
-            purchasedFrame,
-            "Skystones Spent:",
-            self.viewModel.skystonesSpent,
-            COLOR_SKYSTONES,
-            0,
-        )
-        self.addRowToGrid(
-            purchasedFrame,
-            "Covenants:",
-            self.viewModel.covanentsPurchased,
-            COLOR_COVENANTS,
-            1,
-        )
-        self.addRowToGrid(
-            purchasedFrame,
-            "Mystics:",
-            self.viewModel.mysticsPurchased,
-            COLOR_MYSTICS,
-            2,
-        )
+        dataRows = [
+            DataRow(
+                estimationsFrame,
+                "Expected Gold Cost:",
+                self.viewModel.expectedGold,
+                COLOR_GOLD,
+            ),
+            DataRow(
+                estimationsFrame,
+                "Expected Covenants:",
+                self.viewModel.expectedCovenants,
+                COLOR_COVENANTS,
+            ),
+            DataRow(
+                estimationsFrame,
+                "Expected Mystics:",
+                self.viewModel.expectedMystics,
+                COLOR_MYSTICS,
+            ),
+            DataRow(
+                purchasedFrame,
+                "Skystones Spent:",
+                self.viewModel.skystonesSpent,
+                COLOR_SKYSTONES,
+            ),
+            DataRow(
+                purchasedFrame,
+                "Gold Spent:",
+                self.viewModel.goldSpent,
+                COLOR_GOLD,
+            ),
+            DataRow(
+                purchasedFrame,
+                "Covenants:",
+                self.viewModel.covanentsPurchased,
+                COLOR_COVENANTS,
+            ),
+            DataRow(
+                purchasedFrame,
+                "Mystics:",
+                self.viewModel.mysticsPurchased,
+                COLOR_MYSTICS,
+            ),
+        ]
+
+        for index, row in enumerate(dataRows):
+            self.addRowToGrid(
+                row.parentFrame, row.labelTitle, row.variable, row.colour, index
+            )
 
     def createButtonsSection(self) -> None:
         buttonsFrame = CTkFrame(self)

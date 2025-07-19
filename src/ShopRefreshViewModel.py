@@ -1,24 +1,25 @@
 from tkinter import StringVar
+from E7ADBShopRefresh import E7Item
 from ShopRefreshService import ShopRefreshService
 from functools import partial
 from typing import Callable
 
-ESTIMATED_GOLD_COST_PER_SKYSTONE = 3382.09072
-ESTIMATED_COVENANT_YIELD_PER_SKYSTONE = 0.013207018
-ESTIMATED_MYSTIC_YIELD_PER_SKYSTONE = 0.003401292
+EXPECTED_GOLD_COST_PER_SKYSTONE = 3382.09072
+EXPECTED_COVENANT_YIELD_PER_SKYSTONE = 0.013207018
+EXPECTED_MYSTIC_YIELD_PER_SKYSTONE = 0.003401292
 SKYSTONES_PER_REFRESH = 3
 
 
 def convertToGoldCost(skystoneAmount: int) -> int:
-    return int(round(skystoneAmount * ESTIMATED_GOLD_COST_PER_SKYSTONE))
+    return int(round(skystoneAmount * EXPECTED_GOLD_COST_PER_SKYSTONE))
 
 
-def convertToEstimatedCovenents(skystoneAmount: int) -> float:
-    return int(round(skystoneAmount * ESTIMATED_COVENANT_YIELD_PER_SKYSTONE))
+def convertToExpectedCovenents(skystoneAmount: int) -> float:
+    return int(round(skystoneAmount * EXPECTED_COVENANT_YIELD_PER_SKYSTONE))
 
 
-def convertToEstimatedMystics(skystoneAmount: int) -> float:
-    return int(round(skystoneAmount * ESTIMATED_MYSTIC_YIELD_PER_SKYSTONE))
+def convertToExpectedMystics(skystoneAmount: int) -> float:
+    return int(round(skystoneAmount * EXPECTED_MYSTIC_YIELD_PER_SKYSTONE))
 
 
 class ShopRefreshViewModel:
@@ -30,11 +31,12 @@ class ShopRefreshViewModel:
         self.onServiceCompletionCallback = None
 
         self.skystoneInputVariable = StringVar()
-        self.estimatedGold = StringVar(value="0")
-        self.estimatedCovenants = StringVar(value="0")
-        self.estimatedMystics = StringVar(value="0")
+        self.expectedGold = StringVar(value="0")
+        self.expectedCovenants = StringVar(value="0")
+        self.expectedMystics = StringVar(value="0")
 
         self.skystonesSpent = StringVar(value="0")
+        self.goldSpent = StringVar(value="0")
         self.covanentsPurchased = StringVar(value="0")
         self.mysticsPurchased = StringVar(value="0")
 
@@ -43,7 +45,7 @@ class ShopRefreshViewModel:
             partial(
                 self.onInputChange,
                 self.skystoneInputVariable,
-                self.estimatedGold,
+                self.expectedGold,
                 convertToGoldCost,
             ),
         )
@@ -52,8 +54,8 @@ class ShopRefreshViewModel:
             partial(
                 self.onInputChange,
                 self.skystoneInputVariable,
-                self.estimatedCovenants,
-                convertToEstimatedCovenents,
+                self.expectedCovenants,
+                convertToExpectedCovenents,
             ),
         )
         self.skystoneInputVariable.trace_add(
@@ -61,8 +63,8 @@ class ShopRefreshViewModel:
             partial(
                 self.onInputChange,
                 self.skystoneInputVariable,
-                self.estimatedMystics,
-                convertToEstimatedMystics,
+                self.expectedMystics,
+                convertToExpectedMystics,
             ),
         )
 
@@ -96,7 +98,7 @@ class ShopRefreshViewModel:
         self,
         inputStringVar: StringVar,
         mirrorStringVar: StringVar,
-        convertCurrency: StringVar,
+        convertCurrency: Callable[[int], float],
         *args,
     ) -> None:
         currentValue = inputStringVar.get()
@@ -107,7 +109,13 @@ class ShopRefreshViewModel:
         else:
             mirrorStringVar.set("0")
 
-    def onShopRefresh(self, data: dict) -> None:
-        self.skystonesSpent.set(str(data["Refresh Count"] * SKYSTONES_PER_REFRESH))
-        self.covanentsPurchased.set(str(data["Covenant bookmark"]))
-        self.mysticsPurchased.set(str(data["Mystic medal"]))
+    def onShopRefresh(self, data: dict[str, E7Item | int]) -> None:
+        goldSpent = 0
+        for _, value in data.items():
+            if type(value) == E7Item:
+                goldSpent = goldSpent + value.count * value.price
+
+        self.skystonesSpent.set(f'{data["Refresh Count"] * SKYSTONES_PER_REFRESH:,}')
+        self.goldSpent.set(f"{goldSpent:,}")
+        self.covanentsPurchased.set(f'{data["Covenant bookmark"].count:,}')
+        self.mysticsPurchased.set(f'{data["Mystic medal"].count:,}')
