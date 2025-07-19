@@ -1,22 +1,21 @@
 from typing import Tuple
 
-#APP
-FONT_FAMILY: str = "Arial"
-FONT_SIZE: int = 14
+# APP
+FONT_FAMILY: str = "Helvetica"
+FONT_SIZE: int = 18
 APP_FONT: Tuple[str, int] = (FONT_FAMILY, FONT_SIZE)
 APP_APPEARANCE_MODE: str = "System"
 APP_WINDOW_RESOLUTION: str = "540x360"
 APP_TITLE: str = "E7 ADB Shop Refresh"
 
-#UI Elements
+# UI Elements
 PADDING_Y: int = 20
 PADDING_X: int = 20
 LABEL_PADDING_X_RIGHT: int = 10
 GRID_PADDING_X: int = 10
 GRID_PADDING_Y: int = 5
 
-COLOR_GOLD_COIN = "#FDBA28"
+COLOR_GOLD = "#FDBA28"
 COLOR_COVENANTS = "#4772FF"
 COLOR_MYSTICS = "#FF5C2B"
-COLOR_SKYSTONES ="#47C6FF"  
-
+COLOR_SKYSTONES = "#47C6FF"

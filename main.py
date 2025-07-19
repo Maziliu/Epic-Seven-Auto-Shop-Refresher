@@ -4,7 +4,7 @@ from ShopRefreshView import ShopRefreshView
 from ShopRefreshService import ShopRefreshService
 from ShopRefreshViewModel import ShopRefreshViewModel
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     customtkinter.set_appearance_mode(APP_APPEARANCE_MODE)
     app = customtkinter.CTk()
     app.title(APP_TITLE)
