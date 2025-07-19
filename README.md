@@ -1,7 +1,7 @@
 # Epic Seven ADB Shop Refresher
 
 <div align="center">
-  <img src="adb-assets/E7%20Shop%20Refresh%20Demo.gif" alt="E7 ADB Shop Refresher Demo" width="700">
+  <img src="adb-assets/E7%20Shop%20Refresh%20Demo.gif" alt="E7 ADB Shop Refresher Demo">
 </div>
 
 ## Important Notice
