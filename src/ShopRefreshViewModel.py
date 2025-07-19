@@ -4,14 +4,18 @@ from ShopRefreshService import ShopRefreshService
 from functools import partial
 from typing import Callable
 
-EXPECTED_GOLD_COST_PER_SKYSTONE = 3382.09072
+GOLD_COST_PER_COVENANT = 184000
+GOLD_COST_PER_MYSTIC = 280000
 EXPECTED_COVENANT_YIELD_PER_SKYSTONE = 0.013207018
 EXPECTED_MYSTIC_YIELD_PER_SKYSTONE = 0.003401292
 SKYSTONES_PER_REFRESH = 3
 
 
 def convertToGoldCost(skystoneAmount: int) -> int:
-    return int(round(skystoneAmount * EXPECTED_GOLD_COST_PER_SKYSTONE))
+    return (
+        convertToExpectedCovenents(skystoneAmount) * GOLD_COST_PER_COVENANT
+        + convertToExpectedMystics(skystoneAmount) * GOLD_COST_PER_MYSTIC
+    )
 
 
 def convertToExpectedCovenents(skystoneAmount: int) -> float:
@@ -111,9 +115,9 @@ class ShopRefreshViewModel:
 
     def onShopRefresh(self, data: dict[str, E7Item | int]) -> None:
         goldSpent = 0
-        for _, value in data.items():
-            if type(value) == E7Item:
-                goldSpent = goldSpent + value.count * value.price
+        for _, item in data.items():
+            if type(item) == E7Item:
+                goldSpent = goldSpent + item.count * item.price
 
         self.skystonesSpent.set(f'{data["Refresh Count"] * SKYSTONES_PER_REFRESH:,}')
         self.goldSpent.set(f"{goldSpent:,}")
