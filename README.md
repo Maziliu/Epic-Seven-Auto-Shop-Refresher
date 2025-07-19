@@ -19,7 +19,7 @@ This is a GUI wrapper around the ADB shop refresh functionality from the origina
 
 ## Download & Run
 
-1. **Download the latest release** from the [Releases Page](https://github.com/Maziliu/Epic-Seven-Auto-Shop-Refresher/releases)
+1. **Download the E7ADBShopRefresher.exe** from the [Releases Page](https://github.com/Maziliu/Epic-Seven-Auto-Shop-Refresher/releases)
 2. **Have Epic Seven open** at either the lobby or already in the secret shop
 3. **Make sure ADB (Android debug bridge)** is enabled on your emulator
 4. **Make sure the enumalor resolution** is 1920x1080
