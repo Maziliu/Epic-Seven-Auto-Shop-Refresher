@@ -8,6 +8,21 @@ from PIL import Image
 import cv2
 import numpy as np
 
+# Subprocesses were making windows and this supresses them
+if sys.platform == "win32":
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+
+
+def getResourcePath(relative_path):
+    try:
+        # Using the --onefile param to compile so the pyinstaller makes a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 
 class E7Item:
     def __init__(self, image=None, price=0, count=0):
@@ -24,7 +39,10 @@ class E7Inventory:
         self.inventory = dict()
 
     def addItem(self, path: str, name="", price=0, count=0):
-        image = cv2.imread(os.path.join("adb-assets", path))
+        image_path = getResourcePath(os.path.join("adb-assets", path))
+        image = cv2.imread(image_path)
+        if image is None:
+            raise FileNotFoundError(f"Could not load image at: {image_path}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         newItem = E7Item(image, price, count)
         self.inventory[name] = newItem
@@ -65,7 +83,19 @@ class E7ADBShopRefresh:
         self.ip_port = ip_port
         self.device_args = [] if ip_port is None else ["-s", ip_port]
         self.refresh_count = 0
-        self.adb_path = os.path.join("adb-assets", "platform-tools", "adb")
+
+        self.adb_path = getResourcePath(
+            os.path.join("adb-assets", "platform-tools", "adb.exe")
+        )
+        # if the first fails try again but with no .exe externsion
+        if not os.path.exists(self.adb_path):
+            self.adb_path = getResourcePath(
+                os.path.join("adb-assets", "platform-tools", "adb")
+            )
+
+        if not os.path.exists(self.adb_path):
+            raise FileNotFoundError(f"ADB executable not found at: {self.adb_path}")
+
         self.storage = E7Inventory()
         self.screenwidth = 1920
         self.screenheight = 1080
@@ -121,7 +151,6 @@ class E7ADBShopRefresh:
                 break
             # look at shop (page 1)
             screenshot = self.takeScreenshot()
-            # print(len(self.storage.inventory.items()))
             for key, value in self.storage.inventory.items():
                 pos = self.findItemPosition(screenshot, value.image)
                 if pos is not None:
@@ -133,11 +162,17 @@ class E7ADBShopRefresh:
             if not self.loop_active:
                 break
             # swipe
-            adb_process = subprocess.run(
-                [self.adb_path]
-                + self.device_args
-                + ["shell", "input", "swipe", x1, y1, x1, y2]
-            )
+            try:
+                adb_process = subprocess.run(
+                    [self.adb_path]
+                    + self.device_args
+                    + ["shell", "input", "swipe", x1, y1, x1, y2],
+                    check=True,
+                    startupinfo=startupinfo,
+                )
+            except subprocess.CalledProcessError as e:
+                print(f"ADB command failed: {e}")
+                break
             # wait for action to complete
             time.sleep(0.75)
 
@@ -168,21 +203,27 @@ class E7ADBShopRefresh:
         self.notifyComplete()
 
     def updateScreenDimension(self):
-        adb_process = subprocess.run(
-            [self.adb_path] + self.device_args + ["exec-out", "screencap", "-p"],
-            stdout=subprocess.PIPE,
-        )
-        byte_image = BytesIO(adb_process.stdout)
-        pil_image = Image.open(byte_image)
-        pil_image = np.array(pil_image)
-        y, x, _ = pil_image.shape
-        self.screenwidth = x
-        self.screenheight = y
+        try:
+            adb_process = subprocess.run(
+                [self.adb_path] + self.device_args + ["exec-out", "screencap", "-p"],
+                stdout=subprocess.PIPE,
+                check=True,
+                startupinfo=startupinfo,
+            )
+            byte_image = BytesIO(adb_process.stdout)
+            pil_image = Image.open(byte_image)
+            pil_image = np.array(pil_image)
+            y, x, _ = pil_image.shape
+            self.screenwidth = x
+            self.screenheight = y
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to get screen dimensions: {e}")
 
     def takeScreenshot(self):
         adb_process = subprocess.run(
             [self.adb_path] + self.device_args + ["exec-out", "screencap", "-p"],
             stdout=subprocess.PIPE,
+            startupinfo=startupinfo,
         )
         byte_image = BytesIO(adb_process.stdout)
         pil_image = Image.open(byte_image)
@@ -209,7 +250,8 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run(
             [self.adb_path]
             + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)]
+            + ["shell", "input", "tap", str(x), str(y)],
+            startupinfo=startupinfo,
         )
         time.sleep(self.tap_sleep)
 
@@ -219,7 +261,8 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run(
             [self.adb_path]
             + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)]
+            + ["shell", "input", "tap", str(x), str(y)],
+            startupinfo=startupinfo,
         )
         time.sleep(self.tap_sleep)
 
@@ -229,7 +272,8 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run(
             [self.adb_path]
             + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)]
+            + ["shell", "input", "tap", str(x), str(y)],
+            startupinfo=startupinfo,
         )
         time.sleep(self.tap_sleep)
 
@@ -241,7 +285,8 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run(
             [self.adb_path]
             + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)]
+            + ["shell", "input", "tap", str(x), str(y)],
+            startupinfo=startupinfo,
         )
         time.sleep(self.tap_sleep)
 
@@ -251,7 +296,8 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run(
             [self.adb_path]
             + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)]
+            + ["shell", "input", "tap", str(x), str(y)],
+            startupinfo=startupinfo,
         )
         time.sleep(self.tap_sleep)
         time.sleep(0.5)
@@ -262,7 +308,8 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run(
             [self.adb_path]
             + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)]
+            + ["shell", "input", "tap", str(x), str(y)],
+            startupinfo=startupinfo,
         )
         time.sleep(self.tap_sleep)
 
@@ -274,6 +321,7 @@ class E7ADBShopRefresh:
         adb_process = subprocess.run(
             [self.adb_path]
             + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)]
+            + ["shell", "input", "tap", str(x), str(y)],
+            startupinfo=startupinfo,
         )
         time.sleep(self.tap_sleep)
