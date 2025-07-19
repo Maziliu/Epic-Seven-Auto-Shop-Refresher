@@ -6,7 +6,7 @@
 
 ## Important Notice
 
-This project is **Windows only** and works **exclusively with Android emulators** that have ADB enabled. It will not work with the official Epic Seven client on PC or mobile devices. If you need a shop refresher for the official PC client, visit the original project by [Solunium](https://github.com/Solunium/Epic-Seven-E7-Secret-Shop-Refresh):
+This project is **Windows only** and works **exclusively with Android emulators** that have ADB enabled. It will not work with the official Epic Seven PC client or mobile devices. If you need a shop refresher for the official PC client, visit the original project by [Solunium](https://github.com/Solunium/Epic-Seven-E7-Secret-Shop-Refresh):
 
 **[Epic Seven E7 Secret Shop Refresh - Original Project](https://github.com/Solunium/Epic-Seven-E7-Secret-Shop-Refresh)**
 
