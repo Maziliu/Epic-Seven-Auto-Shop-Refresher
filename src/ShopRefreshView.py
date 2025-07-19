@@ -119,7 +119,6 @@ class ShopRefreshView(CTkFrame):
             self.viewModel.startRefresh()
 
     def stopRefresh(self) -> None:
-        self.toggleLockableWidgets()
         self.viewModel.stopRefresh()
 
     def isInputNumber(self, inputString: str) -> bool:
