@@ -8,6 +8,7 @@ from PIL import Image
 import cv2
 import numpy as np
 from copy import deepcopy
+import random
 
 # Subprocesses were making windows and this supresses them
 if sys.platform == "win32":
@@ -163,6 +164,7 @@ class E7ADBShopRefresh:
             if not self.loop_active:
                 break
             # swipe
+            time.sleep(random.randint(1000, 5000) / 10000)
             try:
                 adb_process = subprocess.run(
                     [self.adb_path]
@@ -245,6 +247,8 @@ class E7ADBShopRefresh:
 
     # macro
     def clickShop(self):
+        time.sleep(random.randint(1000, 5000) / 10000)
+
         # newshop
         x = self.screenwidth * 0.0411
         y = self.screenheight * 0.3835
@@ -279,6 +283,8 @@ class E7ADBShopRefresh:
         time.sleep(self.tap_sleep)
 
     def clickBuy(self, pos):
+        time.sleep(random.randint(1000, 5000) / 10000)
+
         if pos is None:
             return False
 
