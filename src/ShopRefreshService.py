@@ -4,10 +4,11 @@ import threading
 
 
 class ShopRefreshService:
-    def __init__(self):
+    def __init__(self, device=None):
         self.e7ADBShopRefresh = None
         self.onServiceCompletionCallback: Callable[[None], None] = None
         self.observerCallbacks: list[Callable[[dict], None]] = []
+        self.device = device
 
     def setOnServiceCompletionCallback(self, callback: Callable[[None], None]) -> None:
         self.onServiceCompletionCallback = callback
@@ -17,7 +18,9 @@ class ShopRefreshService:
             self.onServiceCompletionCallback()
 
     def start(self, skystoneAmount: int) -> None:
-        self.e7ADBShopRefresh = E7ADBShopRefresh(budget=skystoneAmount)
+        self.e7ADBShopRefresh = E7ADBShopRefresh(
+            budget=skystoneAmount, ip_port=self.device
+        )
         self.e7ADBShopRefresh.attachObserver(self.onShopRefresh)
         self.e7ADBShopRefresh.attachOnComplete(self.onServiceCompletion)
         shopRefreshProcess = threading.Thread(

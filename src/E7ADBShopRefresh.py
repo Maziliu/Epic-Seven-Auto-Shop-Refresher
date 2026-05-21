@@ -10,7 +10,6 @@ import numpy as np
 from copy import deepcopy
 import random
 
-# Subprocesses were making windows and this supresses them
 if sys.platform == "win32":
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -75,7 +74,7 @@ class E7Inventory:
 
 
 class E7ADBShopRefresh:
-    def __init__(self, tap_sleep: float = 0.5, budget=None, ip_port=None, debug=False):
+    def __init__(self, tap_sleep: float = 0.5, budget=None, ip_port=None, debug=True):
         self.observerCallbacks = []
         self.onCompletionCallback = None
         self.loop_active = False
@@ -105,7 +104,7 @@ class E7ADBShopRefresh:
 
         self.storage.addItem("cov.jpg", "Covenant bookmark", 184000)
         self.storage.addItem("mys.jpg", "Mystic medal", 280000)
-        if debug:
+        if True:
             self.storage.addItem("fb.jpg", "Friendship bookmark", 18000)
 
     def setOnCompletionCallback(self, callback):
@@ -134,7 +133,6 @@ class E7ADBShopRefresh:
         self.refreshShop()
 
     def refreshShop(self):
-        self.clickShop()
         # time needed for item to drop in after refresh (0.8)
         sliding_time = 1
         # stat track
@@ -244,43 +242,6 @@ class E7ADBShopRefresh:
             pos = (x, y)
             return pos
         return None
-
-    # macro
-    def clickShop(self):
-        time.sleep(random.randint(1000, 5000) / 10000)
-
-        # newshop
-        x = self.screenwidth * 0.0411
-        y = self.screenheight * 0.3835
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)],
-            startupinfo=startupinfo,
-        )
-        time.sleep(self.tap_sleep)
-
-        # oldshop
-        x = self.screenwidth * 0.4406
-        y = self.screenheight * 0.2462
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)],
-            startupinfo=startupinfo,
-        )
-        time.sleep(self.tap_sleep)
-
-        # newshop
-        x = self.screenwidth * 0.0411
-        y = self.screenheight * 0.3835
-        adb_process = subprocess.run(
-            [self.adb_path]
-            + self.device_args
-            + ["shell", "input", "tap", str(x), str(y)],
-            startupinfo=startupinfo,
-        )
-        time.sleep(self.tap_sleep)
 
     def clickBuy(self, pos):
         time.sleep(random.randint(1000, 5000) / 10000)
