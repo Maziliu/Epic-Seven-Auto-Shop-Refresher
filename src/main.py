@@ -9,6 +9,7 @@ from DeviceSelectorView import DeviceSelectorView
 if __name__ == "__main__":
     customtkinter.set_appearance_mode(APP_APPEARANCE_MODE)
     app = customtkinter.CTk()
+    app.attributes("-topmost", True)
     app.title(APP_TITLE)
 
     device = None
