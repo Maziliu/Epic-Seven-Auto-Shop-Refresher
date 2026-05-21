@@ -30,10 +30,6 @@ This is a GUI wrapper around the ADB shop refresh functionality from the origina
 4. **Make sure the enumalor resolution** is 1920x1080
 5. **Run the executable**
 
-## Known Issue
-
-If your emulator or PC is slow or if the emulator freezes randomly then, the shop refresher's actions may be executed faster than the emulator can respond to. When this happens the shop refresher will take multiple attempts to buy a summon or refresh and for each time it does it will increment the counters even if it only actually buys it once. It is important to note that I have not seen the program skip a summon because of this but it is not entirely impossible. Personally, all I've seen this do is make the refresher terminate early (it will say it spent the target amount and terminate even if in reality it spent less due to lag). The original project helps the user mitigate this by allowing the user to change the speed of the refresher but my GUI does not since I do not see this very often. This may or may not change in the future.
-
 ## Manual Compilation
 
 If you want to manually compile this project use the following command:
