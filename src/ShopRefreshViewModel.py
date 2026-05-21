@@ -1,4 +1,5 @@
 from tkinter import StringVar
+from CurrencyService import CurrencyService
 from E7ADBShopRefresh import E7Item
 from ShopRefreshService import ShopRefreshService
 from functools import partial
@@ -27,10 +28,14 @@ def convertToExpectedMystics(skystoneAmount: int) -> float:
 
 
 class ShopRefreshViewModel:
-    def __init__(self, shopRefreshService: ShopRefreshService):
+    def __init__(
+        self, shopRefreshService: ShopRefreshService, currencyService: CurrencyService
+    ):
         self.shopRefreshService = shopRefreshService
         self.shopRefreshService.attachObserver(self.onShopRefresh)
         self.shopRefreshService.setOnServiceCompletionCallback(self.onServiceCompletion)
+
+        self.currencyService = currencyService
 
         self.onServiceCompletionCallback = None
 
@@ -86,6 +91,29 @@ class ShopRefreshViewModel:
             currentSkystoneValue.isdigit()
             and int(currentSkystoneValue) >= SKYSTONES_PER_REFRESH
         )
+
+    def isSkyStoneAmountEmpty(self) -> bool:
+        currentSkystoneValue = self.skystoneInputVariable.get()
+        return currentSkystoneValue == ""
+
+    def setSkystoneValue(self, value: int) -> None:
+        self.skystoneInputVariable.set(value=value)
+
+    def extractSkystones(self) -> None:
+        gold, skystones = self.currencyService.extractCurrencies()
+        if convertToGoldCost(skystones) <= gold:
+            maxSkystones = skystones
+        else:
+            goldCostPerSkyStone = (
+                EXPECTED_COVENANT_YIELD_PER_SKYSTONE * GOLD_COST_PER_COVENANT
+                + EXPECTED_MYSTIC_YIELD_PER_SKYSTONE * GOLD_COST_PER_MYSTIC
+            )
+            maxSkystones = int(gold / goldCostPerSkyStone)
+
+            # Backwards conversion sometimes too big by 1 ex gold step so this just brute forces down to the correct val
+            while convertToGoldCost(maxSkystones) > gold:
+                maxSkystones -= SKYSTONES_PER_REFRESH
+        self.skystoneInputVariable.set(maxSkystones)
 
     def startRefresh(self) -> None:
         currentSkystoneValue = self.skystoneInputVariable.get()

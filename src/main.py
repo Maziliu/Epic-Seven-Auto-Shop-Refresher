@@ -1,4 +1,5 @@
 import customtkinter
+from CurrencyService import CurrencyService
 from Style import APP_APPEARANCE_MODE, APP_TITLE
 from ShopRefreshView import ShopRefreshView
 from ShopRefreshService import ShopRefreshService
@@ -23,11 +24,12 @@ if __name__ == "__main__":
         app.destroy()
         raise SystemExit
 
-    service = ShopRefreshService(device)
-    viewmodel = ShopRefreshViewModel(service)
+    refreshService = ShopRefreshService(device)
+    currencyService = CurrencyService(device)
+    viewmodel = ShopRefreshViewModel(refreshService, currencyService)
 
     def onClose():
-        service.stop()
+        refreshService.stop()
         app.destroy()
 
     ShopRefreshView(app, viewmodel)

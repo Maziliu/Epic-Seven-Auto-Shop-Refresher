@@ -128,6 +128,9 @@ class ShopRefreshView(CTkFrame):
         self.toggleWidgetState(self.stopButton)
 
     def startRefresh(self) -> None:
+        if self.viewModel.isSkyStoneAmountEmpty():
+            self.viewModel.extractSkystones()
+
         if self.viewModel.isValidSkystoneAmount():
             self.toggleLockableWidgets()
             self.viewModel.startRefresh()
