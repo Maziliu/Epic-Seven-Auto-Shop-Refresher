@@ -1,4 +1,4 @@
-from E7ADBShopRefresh import E7ADBShopRefresh, E7Item
+from E7ADBShopRefresh import E7Item
 from typing import Callable
 import threading
 
