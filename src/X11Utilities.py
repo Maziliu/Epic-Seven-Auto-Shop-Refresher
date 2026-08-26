@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 DEFAULT_MATCH_THRESHOLD: float = 0.85
-DEFAULT_CLICK_HOLD_DELAY: float = 0.02
+DEFAULT_CLICK_HOLD_DELAY: float = 0.2
 
 _cachedDisplay: Optional[display.Display] = None
 _templateCache: dict[str, np.ndarray] = {}
@@ -165,8 +165,23 @@ def drag(
         if stepDelay > 0:
             time.sleep(stepDelay)
 
-    # Release and restore cursor atomically
     xtest.fake_input(d, X.ButtonRelease, detail=1)
     if restoreCursor:
         xtest.fake_input(d, X.MotionNotify, x=origX, y=origY)
     d.sync()
+
+
+def findGameWindows(targetNames: Optional[list[str]] = None) -> list[Tuple[int, str]]:
+    if targetNames is None:
+        targetNames = ["Epic Seven", "Wine Desktop"]
+    d = getDisplay()
+    root = d.screen().root
+    results = []
+    for window in root.query_tree().children:
+        try:
+            name = window.get_wm_name()
+            if name and any(t.lower() in name.lower() for t in targetNames):
+                results.append((window.id, name))
+        except Exception:
+            pass
+    return results

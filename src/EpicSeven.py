@@ -5,7 +5,6 @@ class Inventory:
     DEFAULT_ITEMS: dict[str, int] = {
         "Covenant": 0,
         "Mystic": 0,
-        # "Test": 0
     }
 
     def __init__(self, initialItems: Optional[dict[str, int]] = None):

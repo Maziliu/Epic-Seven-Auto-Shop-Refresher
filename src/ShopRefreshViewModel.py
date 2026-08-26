@@ -1,9 +1,6 @@
-from tkinter import StringVar
-from CurrencyService import CurrencyService
-from E7ADBShopRefresh import E7Item
+from typing import Optional
+from PyQt6.QtCore import QObject, pyqtSignal
 from ShopRefreshService import ShopRefreshService
-from functools import partial
-from typing import Callable
 
 GOLD_COST_PER_COVENANT = 184000
 GOLD_COST_PER_MYSTIC = 280000
@@ -14,140 +11,131 @@ SKYSTONES_PER_REFRESH = 3
 
 def convertToGoldCost(skystoneAmount: int) -> int:
     return (
-        convertToExpectedCovenents(skystoneAmount) * GOLD_COST_PER_COVENANT
+        convertToExpectedCovenants(skystoneAmount) * GOLD_COST_PER_COVENANT
         + convertToExpectedMystics(skystoneAmount) * GOLD_COST_PER_MYSTIC
     )
 
 
-def convertToExpectedCovenents(skystoneAmount: int) -> float:
+def convertToExpectedCovenants(skystoneAmount: int) -> int:
     return int(round(skystoneAmount * EXPECTED_COVENANT_YIELD_PER_SKYSTONE))
 
 
-def convertToExpectedMystics(skystoneAmount: int) -> float:
+def convertToExpectedMystics(skystoneAmount: int) -> int:
     return int(round(skystoneAmount * EXPECTED_MYSTIC_YIELD_PER_SKYSTONE))
 
 
-class ShopRefreshViewModel:
-    def __init__(
-        self, shopRefreshService: ShopRefreshService, currencyService: CurrencyService
-    ):
+class ShopRefreshViewModel(QObject):
+    statsUpdated = pyqtSignal()
+    statusChanged = pyqtSignal(str, str)
+    progressChanged = pyqtSignal(int)
+    runningStateChanged = pyqtSignal(bool)
+
+    def __init__(self, shopRefreshService: ShopRefreshService):
+        super().__init__()
         self.shopRefreshService = shopRefreshService
         self.shopRefreshService.attachObserver(self.onShopRefresh)
         self.shopRefreshService.setOnServiceCompletionCallback(self.onServiceCompletion)
 
-        self.currencyService = currencyService
+        self.skystonesInput: int = 0
+        self.targetCycles: int = 0
+        self.currentRefreshCount: int = 0
+        self.isRunning: bool = False
 
-        self.onServiceCompletionCallback = None
+        self.expectedGold: int = 0
+        self.expectedCovenants: int = 0
+        self.expectedMystics: int = 0
 
-        self.skystoneInputVariable = StringVar()
-        self.expectedGold = StringVar(value="0")
-        self.expectedCovenants = StringVar(value="0")
-        self.expectedMystics = StringVar(value="0")
+        self.skystonesSpent: int = 0
+        self.goldSpent: int = 0
+        self.covenantsPurchased: int = 0
+        self.mysticsPurchased: int = 0
 
-        self.skystonesSpent = StringVar(value="0")
-        self.goldSpent = StringVar(value="0")
-        self.covanentsPurchased = StringVar(value="0")
-        self.mysticsPurchased = StringVar(value="0")
+    def setSkystones(self, amount: int) -> None:
+        self.skystonesInput = max(0, amount)
+        self.targetCycles = self.skystonesInput // SKYSTONES_PER_REFRESH
+        self.expectedGold = convertToGoldCost(self.skystonesInput)
+        self.expectedCovenants = convertToExpectedCovenants(self.skystonesInput)
+        self.expectedMystics = convertToExpectedMystics(self.skystonesInput)
+        self.statsUpdated.emit()
 
-        self.skystoneInputVariable.trace_add(
-            "write",
-            partial(
-                self.onInputChange,
-                self.skystoneInputVariable,
-                self.expectedGold,
-                convertToGoldCost,
-            ),
-        )
-        self.skystoneInputVariable.trace_add(
-            "write",
-            partial(
-                self.onInputChange,
-                self.skystoneInputVariable,
-                self.expectedCovenants,
-                convertToExpectedCovenents,
-            ),
-        )
-        self.skystoneInputVariable.trace_add(
-            "write",
-            partial(
-                self.onInputChange,
-                self.skystoneInputVariable,
-                self.expectedMystics,
-                convertToExpectedMystics,
-            ),
-        )
+    def addSkystones(self, amount: int) -> None:
+        self.setSkystones(self.skystonesInput + amount)
 
-    def setServiceCompletionCallback(self, callback: Callable[[None], None]) -> None:
-        self.onServiceCompletionCallback = callback
+    def clearSkystones(self) -> None:
+        self.setSkystones(0)
 
-    def onServiceCompletion(self):
-        if self.onServiceCompletionCallback:
-            self.onServiceCompletionCallback()
-            self.skystoneInputVariable.set("")
+    def getPlannedRefreshesText(self) -> str:
+        if self.skystonesInput >= SKYSTONES_PER_REFRESH:
+            cycles = self.skystonesInput // SKYSTONES_PER_REFRESH
+            return f"{cycles:,} refreshes"
+        return "0 refreshes"
 
     def isValidSkystoneAmount(self) -> bool:
-        currentSkystoneValue = self.skystoneInputVariable.get()
-        return (
-            currentSkystoneValue.isdigit()
-            and int(currentSkystoneValue) >= SKYSTONES_PER_REFRESH
-        )
-
-    def isSkyStoneAmountEmpty(self) -> bool:
-        currentSkystoneValue = self.skystoneInputVariable.get()
-        return currentSkystoneValue == ""
-
-    def setSkystoneValue(self, value: int) -> None:
-        self.skystoneInputVariable.set(value=value)
-
-    def extractSkystones(self) -> None:
-        gold, skystones = self.currencyService.extractCurrencies()
-        if convertToGoldCost(skystones) <= gold:
-            maxSkystones = skystones
-        else:
-            goldCostPerSkyStone = (
-                EXPECTED_COVENANT_YIELD_PER_SKYSTONE * GOLD_COST_PER_COVENANT
-                + EXPECTED_MYSTIC_YIELD_PER_SKYSTONE * GOLD_COST_PER_MYSTIC
-            )
-            maxSkystones = int(gold / goldCostPerSkyStone)
-
-            # Backwards conversion sometimes too big by 1 ex gold step so this just brute forces down to the correct val
-            while convertToGoldCost(maxSkystones) > gold:
-                maxSkystones -= SKYSTONES_PER_REFRESH
-        self.skystoneInputVariable.set(maxSkystones)
+        return self.skystonesInput >= SKYSTONES_PER_REFRESH
 
     def startRefresh(self) -> None:
-        currentSkystoneValue = self.skystoneInputVariable.get()
-        self.skystonesSpent.set("0")
-        self.covanentsPurchased.set("0")
-        self.mysticsPurchased.set("0")
-        self.shopRefreshService.start(int(currentSkystoneValue))
+        if not self.isValidSkystoneAmount() or self.isRunning:
+            return
+
+        self.isRunning = True
+        self.targetCycles = self.skystonesInput // SKYSTONES_PER_REFRESH
+        self.currentRefreshCount = 0
+
+        self.skystonesSpent = 0
+        self.goldSpent = 0
+        self.covenantsPurchased = 0
+        self.mysticsPurchased = 0
+
+        self.statsUpdated.emit()
+        self.progressChanged.emit(0)
+        self.runningStateChanged.emit(True)
+        self.statusChanged.emit(
+            f"Running: Refresh 0 / {self.targetCycles:,} (0%)",
+            "running",
+        )
+
+        self.shopRefreshService.start(self.skystonesInput)
 
     def stopRefresh(self) -> None:
+        if not self.isRunning:
+            return
+        self.isRunning = False
         self.shopRefreshService.stop()
-        self.skystoneInputVariable.set("")
+        self.runningStateChanged.emit(False)
+        self.statusChanged.emit(
+            f"Stopped at {self.currentRefreshCount:,} / {self.targetCycles:,} refreshes",
+            "stopped",
+        )
 
-    def onInputChange(
-        self,
-        inputStringVar: StringVar,
-        mirrorStringVar: StringVar,
-        convertCurrency: Callable[[int], float],
-        *args,
-    ) -> None:
-        currentValue = inputStringVar.get()
-        if currentValue.isdigit():
-            skystones = int(currentValue)
-            result = convertCurrency(skystones)
-            mirrorStringVar.set(f"{result:,}")
+    def onServiceCompletion(self) -> None:
+        if self.isRunning:
+            self.isRunning = False
+            self.runningStateChanged.emit(False)
+            self.progressChanged.emit(100)
+            self.statusChanged.emit(
+                f"Completed {self.currentRefreshCount:,} refreshes! ({self.currentRefreshCount * SKYSTONES_PER_REFRESH:,} SS spent)",
+                "completed",
+            )
+
+    def onShopRefresh(self, data: dict) -> None:
+        covenants = data.get("Covenant", 0)
+        mystics = data.get("Mystic", 0)
+        refreshCount = data.get("Refresh Count", 0)
+        self.currentRefreshCount = refreshCount
+
+        self.covenantsPurchased = covenants
+        self.mysticsPurchased = mystics
+        self.goldSpent = covenants * GOLD_COST_PER_COVENANT + mystics * GOLD_COST_PER_MYSTIC
+        self.skystonesSpent = refreshCount * SKYSTONES_PER_REFRESH
+
+        if self.targetCycles > 0:
+            percent = min(100, int((refreshCount / self.targetCycles) * 100))
+            self.progressChanged.emit(percent)
+            self.statusChanged.emit(
+                f"Running: Refresh {refreshCount:,} / {self.targetCycles:,} ({percent}%)",
+                "running",
+            )
         else:
-            mirrorStringVar.set("0")
+            self.statusChanged.emit(f"Running: Refresh {refreshCount:,}", "running")
 
-    def onShopRefresh(self, data: dict[str, E7Item | int]) -> None:
-        goldSpent = 0
-        for _, item in data.items():
-            if type(item) == E7Item:
-                goldSpent = goldSpent + item.count * item.price
-
-        self.skystonesSpent.set(f'{data["Refresh Count"] * SKYSTONES_PER_REFRESH:,}')
-        self.goldSpent.set(f"{goldSpent:,}")
-        self.covanentsPurchased.set(f'{data["Covenant bookmark"].count:,}')
-        self.mysticsPurchased.set(f'{data["Mystic medal"].count:,}')
+        self.statsUpdated.emit()

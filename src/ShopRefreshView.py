@@ -1,167 +1,207 @@
-from Style import *
-from tkinter import StringVar
-from customtkinter import CTk, CTkBaseClass, CTkFrame, CTkLabel, CTkEntry, CTkButton
+import os
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QFrame,
+)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIntValidator, QPixmap
+from Style import (
+    COLOR_SKYSTONES,
+    COLOR_GOLD,
+    COLOR_COVENANTS,
+    COLOR_MYSTICS,
+    COLOR_SUCCESS,
+    COLOR_DANGER,
+    COLOR_MUTED,
+    ASSETS_DIRECTORY,
+)
 from ShopRefreshViewModel import ShopRefreshViewModel
-from dataclasses import dataclass
 
 
-@dataclass
-class DataRow:
-    parentFrame: CTkFrame
-    labelTitle: str
-    variable: StringVar
-    colour: str
-
-
-class ShopRefreshView(CTkFrame):
-    def __init__(self, master: CTk, viewModel: ShopRefreshViewModel):
-        super().__init__(master)
+class ShopRefreshView(QWidget):
+    def __init__(self, viewModel: ShopRefreshViewModel, parent: QWidget):
+        super().__init__(parent)
         self.viewModel = viewModel
-        self.viewModel.setServiceCompletionCallback(self.toggleLockableWidgets)
-        self.pack()
 
-        self.createSkystoneInputSection()
-        self.createCounterSection()
-        self.createButtonsSection()
+        self.initUI()
+        self.connectViewModel()
+        self.updateStatsDisplay()
 
-    def createSkystoneInputSection(self) -> None:
-        skystoneInputRowFrame = CTkFrame(self)
-        skystoneInputRowFrame.pack(pady=PADDING_Y, padx=PADDING_X)
+    def initUI(self) -> None:
+        mainLayout = QVBoxLayout(self)
+        mainLayout.setContentsMargins(20, 20, 20, 20)
+        mainLayout.setSpacing(14)
 
-        skystoneAmountLabel = CTkLabel(
-            skystoneInputRowFrame,
-            text="Enter the number of skystones you want to burn: ",
-            font=APP_FONT,
-        )
-        skystoneAmountLabel.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
+        headerLayout = QHBoxLayout()
+        headerLayout.setSpacing(12)
 
-        self.skystoneAmountEntry = CTkEntry(
-            skystoneInputRowFrame,
-            textvariable=self.viewModel.skystoneInputVariable,
-            validate="key",
-            validatecommand=(self.register(self.isInputNumber), "%S"),
-        )
-        self.skystoneAmountEntry.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
-
-    def createCounterSection(self) -> None:
-        countersframe = CTkFrame(self)
-        countersframe.pack(pady=PADDING_Y, padx=PADDING_X)
-
-        estimationsFrame = CTkFrame(countersframe)
-        estimationsFrame.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
-        purchasedFrame = CTkFrame(countersframe)
-        purchasedFrame.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
-
-        dataRows = [
-            DataRow(
-                estimationsFrame,
-                "Expected Gold Cost:",
-                self.viewModel.expectedGold,
-                COLOR_GOLD,
-            ),
-            DataRow(
-                estimationsFrame,
-                "Expected Covenants:",
-                self.viewModel.expectedCovenants,
-                COLOR_COVENANTS,
-            ),
-            DataRow(
-                estimationsFrame,
-                "Expected Mystics:",
-                self.viewModel.expectedMystics,
-                COLOR_MYSTICS,
-            ),
-            DataRow(
-                purchasedFrame,
-                "Skystones Spent:",
-                self.viewModel.skystonesSpent,
-                COLOR_SKYSTONES,
-            ),
-            DataRow(
-                purchasedFrame,
-                "Gold Spent:",
-                self.viewModel.goldSpent,
-                COLOR_GOLD,
-            ),
-            DataRow(
-                purchasedFrame,
-                "Covenants:",
-                self.viewModel.covanentsPurchased,
-                COLOR_COVENANTS,
-            ),
-            DataRow(
-                purchasedFrame,
-                "Mystics:",
-                self.viewModel.mysticsPurchased,
-                COLOR_MYSTICS,
-            ),
-        ]
-
-        for index, row in enumerate(dataRows):
-            self.addRowToGrid(
-                row.parentFrame, row.labelTitle, row.variable, row.colour, index
+        iconLabel = QLabel(self)
+        iconPathPng = os.path.join(ASSETS_DIRECTORY, "icon.png")
+        if os.path.exists(iconPathPng):
+            pixmap = QPixmap(iconPathPng).scaled(
+                36,
+                36,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
+            iconLabel.setPixmap(pixmap)
+        headerLayout.addWidget(iconLabel)
 
-    def createButtonsSection(self) -> None:
-        buttonsFrame = CTkFrame(self)
-        buttonsFrame.pack(pady=PADDING_Y, padx=PADDING_X)
+        titleLayout = QVBoxLayout()
+        titleLayout.setSpacing(2)
 
-        self.startButton = CTkButton(
-            buttonsFrame, text="Start Refresh", command=self.startRefresh, font=APP_FONT
-        )
-        self.startButton.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
-        self.stopButton = CTkButton(
-            buttonsFrame, text="Stop Refresh", command=self.stopRefresh, font=APP_FONT
-        )
-        self.stopButton.pack(side="left", padx=PADDING_X, pady=PADDING_Y)
+        appTitle = QLabel("Epic Seven Shop Refresher", self)
+        appTitle.setObjectName("appTitleLabel")
+        titleLayout.addWidget(appTitle)
 
-        self.toggleWidgetState(self.stopButton)
+        subTitle = QLabel("Automated X11 / Wine Secret Shop", self)
+        subTitle.setObjectName("hintLabel")
+        titleLayout.addWidget(subTitle)
 
-    def toggleWidgetState(self, widget: CTkBaseClass) -> None:
-        currentWidgetState = widget.cget("state")
-        newWidgetState = "disabled" if currentWidgetState == "normal" else "normal"
-        widget.configure(state=newWidgetState)
+        headerLayout.addLayout(titleLayout)
+        headerLayout.addStretch()
+        mainLayout.addLayout(headerLayout)
 
-    def toggleLockableWidgets(self) -> None:
-        self.toggleWidgetState(self.skystoneAmountEntry)
-        self.toggleWidgetState(self.startButton)
-        self.toggleWidgetState(self.stopButton)
+        inputCard = QFrame(self)
+        inputCard.setObjectName("cardFrame")
+        inputCardLayout = QVBoxLayout(inputCard)
+        inputCardLayout.setContentsMargins(16, 14, 16, 14)
+        inputCardLayout.setSpacing(10)
 
-    def startRefresh(self) -> None:
-        if self.viewModel.isSkyStoneAmountEmpty():
-            self.viewModel.extractSkystones()
+        cardTitleRow = QHBoxLayout()
+        cardTitle = QLabel("Target Skystones", inputCard)
+        cardTitle.setObjectName("cardTitleLabel")
+        cardTitleRow.addWidget(cardTitle)
 
-        if self.viewModel.isValidSkystoneAmount():
-            self.toggleLockableWidgets()
-            self.viewModel.startRefresh()
+        self.summaryBadge = QLabel("0 refreshes planned", inputCard)
+        self.summaryBadge.setObjectName("summaryBadgeLabel")
+        self.summaryBadge.setAlignment(Qt.AlignmentFlag.AlignRight)
+        cardTitleRow.addWidget(self.summaryBadge)
+        inputCardLayout.addLayout(cardTitleRow)
 
-    def stopRefresh(self) -> None:
-        self.viewModel.stopRefresh()
+        self.skystoneInput = QLineEdit(inputCard)
+        self.skystoneInput.setValidator(QIntValidator(0, 999999, self))
+        self.skystoneInput.textChanged.connect(self.onInputTextChanged)
+        inputCardLayout.addWidget(self.skystoneInput)
 
-    def isInputNumber(self, inputString: str) -> bool:
-        return inputString.isdigit()
+        mainLayout.addWidget(inputCard)
 
-    def addRowToGrid(
+        
+        statsContainer = QHBoxLayout()
+        statsContainer.setSpacing(14)
+
+        leftCard = QFrame(self)
+        leftCard.setObjectName("cardFrame")
+        leftLayout = QVBoxLayout(leftCard)
+        leftLayout.setContentsMargins(16, 14, 16, 14)
+        leftLayout.setSpacing(12)
+
+        leftTitle = QLabel("Expected", leftCard)
+        leftTitle.setObjectName("cardTitleLabel")
+        leftLayout.addWidget(leftTitle)
+
+        self.expRefreshesLabel = self.createStatItem(leftLayout, "Refreshes", COLOR_SKYSTONES)
+        self.expGoldLabel = self.createStatItem(leftLayout, "Gold", COLOR_GOLD)
+        self.expCovLabel = self.createStatItem(leftLayout, "Covenants", COLOR_COVENANTS)
+        self.expMysLabel = self.createStatItem(leftLayout, "Mystics", COLOR_MYSTICS)
+
+        statsContainer.addWidget(leftCard, 1)
+
+        rightCard = QFrame(self)
+        rightCard.setObjectName("cardFrame")
+        rightLayout = QVBoxLayout(rightCard)
+        rightLayout.setContentsMargins(16, 14, 16, 14)
+        rightLayout.setSpacing(12)
+
+        rightTitle = QLabel("Results", rightCard)
+        rightTitle.setObjectName("cardTitleLabel")
+        rightLayout.addWidget(rightTitle)
+
+        self.liveRefreshesLabel = self.createStatItem(rightLayout, "Refreshes Done", COLOR_SKYSTONES)
+        self.liveGoldLabel = self.createStatItem(rightLayout, "Gold", COLOR_GOLD)
+        self.liveCovLabel = self.createStatItem(rightLayout, "Covenants", COLOR_COVENANTS)
+        self.liveMysLabel = self.createStatItem(rightLayout, "Mystics", COLOR_MYSTICS)
+
+        statsContainer.addWidget(rightCard, 1)
+        mainLayout.addLayout(statsContainer)
+
+        actionsLayout = QHBoxLayout()
+        actionsLayout.setSpacing(12)
+
+        self.startBtn = QPushButton("Start", self)
+        self.startBtn.setObjectName("startBtn")
+        self.startBtn.setFixedHeight(46)
+        self.startBtn.clicked.connect(self.viewModel.startRefresh)
+        actionsLayout.addWidget(self.startBtn)
+
+        self.stopBtn = QPushButton("Stop", self)
+        self.stopBtn.setObjectName("stopBtn")
+        self.stopBtn.setFixedHeight(46)
+        self.stopBtn.setEnabled(False)
+        self.stopBtn.clicked.connect(self.viewModel.stopRefresh)
+        actionsLayout.addWidget(self.stopBtn)
+
+        mainLayout.addLayout(actionsLayout)
+
+    def createStatItem(
         self,
-        parentFrame: CTkFrame,
-        labelText: str,
-        value: StringVar,
-        valueColour: str,
-        gridRowIndex: int,
-    ) -> None:
-        CTkLabel(parentFrame, text=labelText, font=APP_FONT).grid(
-            row=gridRowIndex,
-            column=0,
-            sticky="w",
-            padx=GRID_PADDING_X,
-            pady=GRID_PADDING_Y,
-        )
-        CTkLabel(
-            parentFrame, textvariable=value, font=APP_FONT, text_color=valueColour
-        ).grid(
-            row=gridRowIndex,
-            column=1,
-            sticky="w",
-            padx=GRID_PADDING_X,
-            pady=GRID_PADDING_Y,
-        )
+        parentLayout: QVBoxLayout,
+        title: str,
+        valueColor: str,
+    ) -> QLabel:
+        rowLayout = QHBoxLayout()
+        rowLayout.setContentsMargins(0, 2, 0, 2)
+        rowLayout.setSpacing(8)
+
+        titleLabel = QLabel(title)
+        titleLabel.setObjectName("statTitleLabel")
+        rowLayout.addWidget(titleLabel)
+
+        rowLayout.addStretch()
+
+        valueLabel = QLabel("0")
+        valueLabel.setObjectName("statValueLabel")
+        valueLabel.setStyleSheet(f"color: {valueColor}; background: transparent;")
+        valueLabel.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        rowLayout.addWidget(valueLabel)
+
+        parentLayout.addLayout(rowLayout)
+        return valueLabel
+
+    def connectViewModel(self) -> None:
+        self.viewModel.statsUpdated.connect(self.updateStatsDisplay)
+        self.viewModel.runningStateChanged.connect(self.setRunningState)
+
+    def onInputTextChanged(self, text: str) -> None:
+        val = int(text) if text.strip().isdigit() else 0
+        if val != self.viewModel.skystonesInput:
+            self.viewModel.setSkystones(val)
+
+    def updateStatsDisplay(self) -> None:
+        strVal = str(self.viewModel.skystonesInput) if self.viewModel.skystonesInput > 0 else ""
+        if self.skystoneInput.text() != strVal:
+            self.skystoneInput.blockSignals(True)
+            self.skystoneInput.setText(strVal)
+            self.skystoneInput.blockSignals(False)
+
+        self.summaryBadge.setText(self.viewModel.getPlannedRefreshesText())
+
+        self.expRefreshesLabel.setText(f"{self.viewModel.targetCycles:,}")
+        self.expGoldLabel.setText(f"{self.viewModel.expectedGold:,}")
+        self.expCovLabel.setText(f"{self.viewModel.expectedCovenants:,}")
+        self.expMysLabel.setText(f"{self.viewModel.expectedMystics:,}")
+
+        self.liveRefreshesLabel.setText(f"{self.viewModel.currentRefreshCount:,}")
+        self.liveGoldLabel.setText(f"{self.viewModel.goldSpent:,}")
+        self.liveCovLabel.setText(f"{self.viewModel.covenantsPurchased:,}")
+        self.liveMysLabel.setText(f"{self.viewModel.mysticsPurchased:,}")
+
+    def setRunningState(self, isRunning: bool) -> None:
+        self.skystoneInput.setEnabled(not isRunning)
+        self.startBtn.setEnabled(not isRunning)
+        self.stopBtn.setEnabled(isRunning)
