@@ -36,7 +36,7 @@ SKYSTONES_PER_REFRESH = 3
 
 def delay(customDelayInSeconds: Optional[float] = None) -> None:
     if customDelayInSeconds:
-        time.sleep(customDelayInSeconds)
+        time.sleep(customDelayInSeconds + random.randint(0, 100) / 1000)
     else:
         time.sleep(DEFAULT_ACTION_DELAY + random.randint(0, 100) / 1000)
 
@@ -155,7 +155,7 @@ class E7X11ShopRefresh:
                 self.loopActive = False
                 break
 
-            delay()
+            delay(1.5)
         self.notifyCompletion()
 
 
