@@ -1,0 +1,155 @@
+from dataclasses import dataclass
+import time
+from typing import Optional, Tuple
+from Xlib import X, display
+from Xlib.ext import xtest
+import cv2
+import numpy as np
+from PIL import Image
+
+DEFAULT_MATCH_THRESHOLD: float = 0.85
+DEFAULT_CLICK_DELAY: float = 0.05
+
+_cachedDisplay: Optional[display.Display] = None
+_templateCache: dict[str, np.ndarray] = {}
+
+
+@dataclass
+class WindowGeometry:
+    x: int
+    y: int
+    width: int
+    height: int
+
+
+def getDisplay() -> display.Display:
+    global _cachedDisplay
+    if _cachedDisplay is None:
+        _cachedDisplay = display.Display()
+    return _cachedDisplay
+
+
+def getWindowGeometry(windowId: int, d: Optional[display.Display] = None) -> WindowGeometry:
+    d = d or getDisplay()
+    window = d.create_resource_object("window", windowId)
+    geometry = window.get_geometry()
+    return WindowGeometry(
+        x=geometry.x,
+        y=geometry.y,
+        width=geometry.width,
+        height=geometry.height,
+    )
+
+
+def takeScreenshot(windowId: int, d: Optional[display.Display] = None) -> np.ndarray:
+    d = d or getDisplay()
+    window = d.create_resource_object("window", windowId)
+    geometry = window.get_geometry()
+
+    rawImageBytes = window.get_image(
+        0, 0, geometry.width, geometry.height, X.ZPixmap, 0xFFFFFFFF
+    )
+    img = Image.frombytes(
+        "RGB",
+        (geometry.width, geometry.height),
+        rawImageBytes.data,
+        "raw",
+        "BGRX",
+    )
+    return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+
+
+def loadTemplateImage(referenceImagePath: str) -> np.ndarray:
+    if referenceImagePath not in _templateCache:
+        referenceImage = cv2.imread(referenceImagePath)
+        if referenceImage is None:
+            raise FileNotFoundError(f"Asset {referenceImagePath} does not exist")
+        _templateCache[referenceImagePath] = referenceImage
+    return _templateCache[referenceImagePath]
+
+
+def findClickPosition(
+    screenshot: np.ndarray,
+    referenceImagePath: str,
+    matchThreshold: float = DEFAULT_MATCH_THRESHOLD,
+) -> Optional[Tuple[int, int]]:
+    referenceImage = loadTemplateImage(referenceImagePath)
+
+    if (
+        screenshot.shape[0] < referenceImage.shape[0]
+        or screenshot.shape[1] < referenceImage.shape[1]
+    ):
+        return None
+
+    match = cv2.matchTemplate(screenshot, referenceImage, cv2.TM_CCOEFF_NORMED)
+    _, maxMatchValue, _, maxLoc = cv2.minMaxLoc(match)
+
+    if maxMatchValue < matchThreshold:
+        return None
+
+    height, width = referenceImage.shape[:2]
+    return (maxLoc[0] + width // 2, maxLoc[1] + height // 2)
+
+
+def click(
+    windowId: int,
+    x: int | float,
+    y: int | float,
+    button: int = 1,
+    delay: float = DEFAULT_CLICK_DELAY,
+    d: Optional[display.Display] = None,
+) -> None:
+    d = d or getDisplay()
+    root = d.screen().root
+    window = d.create_resource_object("window", windowId)
+
+    coords = window.translate_coords(root, int(round(x)), int(round(y)))
+    rootX = coords.x
+    rootY = coords.y
+
+    xtest.fake_input(d, X.MotionNotify, x=rootX, y=rootY)
+    d.sync()
+    if delay > 0:
+        time.sleep(delay)
+    xtest.fake_input(d, X.ButtonPress, detail=button)
+    d.sync()
+    if delay > 0:
+        time.sleep(delay)
+    xtest.fake_input(d, X.ButtonRelease, detail=button)
+    d.sync()
+
+
+
+def drag(
+    windowId: int,
+    startX: int | float,
+    startY: int | float,
+    endX: int | float,
+    endY: int | float,
+    steps: int = 10,
+    stepDelay: float = 0.01,
+    d: Optional[display.Display] = None,
+) -> None:
+    d = d or getDisplay()
+    root = d.screen().root
+    window = d.create_resource_object("window", windowId)
+
+    startCoords = window.translate_coords(root, int(round(startX)), int(round(startY)))
+    endCoords = window.translate_coords(root, int(round(endX)), int(round(endY)))
+
+    xtest.fake_input(d, X.MotionNotify, x=startCoords.x, y=startCoords.y)
+    d.sync()
+    time.sleep(0.05)
+    xtest.fake_input(d, X.ButtonPress, detail=1)
+    d.sync()
+
+    for i in range(1, steps + 1):
+        currX = int(round(startCoords.x + (endCoords.x - startCoords.x) * (i / steps)))
+        currY = int(round(startCoords.y + (endCoords.y - startCoords.y) * (i / steps)))
+        xtest.fake_input(d, X.MotionNotify, x=currX, y=currY)
+        d.sync()
+        time.sleep(stepDelay)
+
+    time.sleep(0.05)
+    xtest.fake_input(d, X.ButtonRelease, detail=1)
+    d.sync()
