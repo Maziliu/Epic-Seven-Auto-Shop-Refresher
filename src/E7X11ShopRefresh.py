@@ -2,14 +2,15 @@ import os
 import time
 from typing import Callable, Optional, Tuple
 import numpy as np
+import random
 
 from EpicSeven import Inventory
 from X11Utilities import (
     WindowGeometry,
     click,
-    drag,
     findClickPosition,
     getWindowGeometry,
+    scroll,
     takeScreenshot,
 )
 
@@ -28,6 +29,12 @@ BOTTOM_ITEM_SEARCH_START_Y_RATIO: float = 0.60
 DEFAULT_ACTION_DELAY: float = 1
 
 SKYSTONES_PER_REFRESH = 3
+
+def delay(customDelayInSeconds: Optional[float] = None) -> None:
+    if customDelayInSeconds:
+        time.sleep(customDelayInSeconds)
+    else:
+        time.sleep(DEFAULT_ACTION_DELAY + random.randint(0, 100) / 1000)
 
 class E7X11ShopRefresh:
     def __init__(self, windowId: int):
@@ -79,7 +86,7 @@ class E7X11ShopRefresh:
         correctedY = y + geometry.height * BUY_BUTTON_Y_OFFSET_RATIO
 
         click(self.windowId, correctedX, correctedY)
-        time.sleep(DEFAULT_ACTION_DELAY)
+        delay(0.5)
         self.clickConfirmBuyItem()
         self.inventory.incrementItem(key)
         self.notifyObservers()
@@ -101,7 +108,7 @@ class E7X11ShopRefresh:
 
             adjustedPosition = (itemPosition[0], itemPosition[1] + startY)
             self.buyItem(key, adjustedPosition)
-            time.sleep(DEFAULT_ACTION_DELAY)
+            delay()
 
     def refreshShop(self) -> None:
         geometry: WindowGeometry = getWindowGeometry(self.windowId)
@@ -109,29 +116,28 @@ class E7X11ShopRefresh:
         refreshY = geometry.height * REFRESH_BUTTON_Y_RATIO
 
         click(self.windowId, refreshX, refreshY)
-        time.sleep(DEFAULT_ACTION_DELAY + 0.3)
+        delay(0.5)
         self.clickConfirmRefresh()
         self.refreshCount += 1
         self.notifyObservers()
 
-    def scrollShop(self) -> None:
+    def scrollShop(self, clicks: int = 5) -> None:
         geometry: WindowGeometry = getWindowGeometry(self.windowId)
-        centerX = geometry.width * 0.5
-        startY = geometry.height * 0.8
-        endY = geometry.height * 0.2
-        drag(self.windowId, centerX, startY, centerX, endY)
+        centerX = geometry.width * 0.6
+        centerY = geometry.height * 0.5
+        scroll(self.windowId, centerX, centerY, clicks=clicks, direction="down")
 
     def performRefreshCycle(self) -> None:
         screenshotTop = takeScreenshot(self.windowId)
         self.searchBuyItems(screenshotTop)
 
         self.scrollShop()
-        time.sleep(DEFAULT_ACTION_DELAY)
+        delay()
 
         screenshotBottom = takeScreenshot(self.windowId)
         self.searchBuyItems(screenshotBottom, startYRatio=BOTTOM_ITEM_SEARCH_START_Y_RATIO)
 
-        time.sleep(DEFAULT_ACTION_DELAY)
+        delay()
         self.refreshShop()
 
     def start(self, skystones) -> None:
@@ -145,13 +151,12 @@ class E7X11ShopRefresh:
                 self.loopActive = False
                 break
 
-            time.sleep(DEFAULT_ACTION_DELAY)
-
+            delay()
         self.notifyCompletion()
 
 
 if __name__ == "__main__":
     windowId = 18874377
     refresher = E7X11ShopRefresh(windowId)
-    refresher.start(2)
+    refresher.start(9492)
 

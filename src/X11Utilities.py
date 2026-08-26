@@ -8,12 +8,10 @@ import numpy as np
 from PIL import Image
 
 DEFAULT_MATCH_THRESHOLD: float = 0.85
-DEFAULT_CLICK_DELAY: float = 0.10
-DEFAULT_MOTION_DELAY: float = 0.10
+DEFAULT_CLICK_HOLD_DELAY: float = 0.02
 
 _cachedDisplay: Optional[display.Display] = None
 _templateCache: dict[str, np.ndarray] = {}
-
 
 @dataclass
 class WindowGeometry:
@@ -91,8 +89,8 @@ def click(
     x: int | float,
     y: int | float,
     button: int = 1,
-    delay: float = DEFAULT_CLICK_DELAY,
-    motionDelay: float = DEFAULT_MOTION_DELAY,
+    holdDelay: float = DEFAULT_CLICK_HOLD_DELAY,
+    restoreCursor: bool = True,
     d: Optional[display.Display] = None,
 ) -> None:
     d = d or getDisplay()
@@ -103,16 +101,36 @@ def click(
     rootX = coords.x
     rootY = coords.y
 
+    origPointer = root.query_pointer()
+    origX, origY = origPointer.root_x, origPointer.root_y
+
     xtest.fake_input(d, X.MotionNotify, x=rootX, y=rootY)
-    d.sync()
-    if motionDelay > 0:
-        time.sleep(motionDelay)
     xtest.fake_input(d, X.ButtonPress, detail=button)
     d.sync()
-    if delay > 0:
-        time.sleep(delay)
+
+    if holdDelay > 0:
+        time.sleep(holdDelay)
+
     xtest.fake_input(d, X.ButtonRelease, detail=button)
+    if restoreCursor:
+        xtest.fake_input(d, X.MotionNotify, x=origX, y=origY)
     d.sync()
+
+def scroll(
+    windowId: int,
+    x: int | float,
+    y: int | float,
+    clicks: int = 5,
+    direction: str = "down",
+    delay: float = 0.01,
+    restoreCursor: bool = True,
+    d: Optional[display.Display] = None,
+) -> None:
+    button = 5 if direction.lower() == "down" else 4
+    for _ in range(clicks):
+        click(windowId, x, y, button=button, holdDelay=0, restoreCursor=restoreCursor, d=d)
+        if delay > 0:
+            time.sleep(delay)
 
 def drag(
     windowId: int,
@@ -122,18 +140,20 @@ def drag(
     endY: int | float,
     steps: int = 10,
     stepDelay: float = 0.01,
+    restoreCursor: bool = True,
     d: Optional[display.Display] = None,
 ) -> None:
     d = d or getDisplay()
     root = d.screen().root
     window = d.create_resource_object("window", windowId)
 
+    origPointer = root.query_pointer()
+    origX, origY = origPointer.root_x, origPointer.root_y
+
     startCoords = root.translate_coords(window, int(round(startX)), int(round(startY)))
     endCoords = root.translate_coords(window, int(round(endX)), int(round(endY)))
 
     xtest.fake_input(d, X.MotionNotify, x=startCoords.x, y=startCoords.y)
-    d.sync()
-    time.sleep(0.05)
     xtest.fake_input(d, X.ButtonPress, detail=1)
     d.sync()
 
@@ -142,8 +162,11 @@ def drag(
         currentY = int(round(startCoords.y + (endCoords.y - startCoords.y) * (i / steps)))
         xtest.fake_input(d, X.MotionNotify, x=currentX, y=currentY)
         d.sync()
-        time.sleep(stepDelay)
+        if stepDelay > 0:
+            time.sleep(stepDelay)
 
-    time.sleep(0.05)
+    # Release and restore cursor atomically
     xtest.fake_input(d, X.ButtonRelease, detail=1)
+    if restoreCursor:
+        xtest.fake_input(d, X.MotionNotify, x=origX, y=origY)
     d.sync()
