@@ -23,9 +23,11 @@ BUY_BUTTON_X_OFFSET_RATIO: float = 0.4318
 BUY_BUTTON_Y_OFFSET_RATIO: float = 0.025
 REFRESH_BUTTON_X_RATIO: float = 0.1625
 REFRESH_BUTTON_Y_RATIO: float = 0.9148
+BOTTOM_ITEM_SEARCH_START_Y_RATIO: float = 0.60
 
 DEFAULT_ACTION_DELAY: float = 1
 
+SKYSTONES_PER_REFRESH = 3
 
 class E7X11ShopRefresh:
     def __init__(self, windowId: int):
@@ -82,18 +84,23 @@ class E7X11ShopRefresh:
         self.inventory.incrementItem(key)
         self.notifyObservers()
 
-    def searchBuyItems(self, screenshot: np.ndarray) -> None:
+    def searchBuyItems(self, screenshot: np.ndarray, startYRatio: float = 0.0) -> None:
+        height = screenshot.shape[0]
+        startY = int(round(height * startYRatio))
+        searchRegion = screenshot[startY:, :] if startY > 0 else screenshot
+
         for key in self.inventory.getKeys():
             imagePath = os.path.join(ASSETS_DIRECTORY, f"{key.lower()}.png")
             if not os.path.exists(imagePath):
                 raise FileNotFoundError()
 
-            itemPosition = findClickPosition(screenshot, imagePath)
+            itemPosition = findClickPosition(searchRegion, imagePath)
             print(f"Checking {key}, Position: {itemPosition}")
             if itemPosition is None:
                 continue
 
-            self.buyItem(key, itemPosition)
+            adjustedPosition = (itemPosition[0], itemPosition[1] + startY)
+            self.buyItem(key, adjustedPosition)
             time.sleep(DEFAULT_ACTION_DELAY)
 
     def refreshShop(self) -> None:
@@ -102,7 +109,7 @@ class E7X11ShopRefresh:
         refreshY = geometry.height * REFRESH_BUTTON_Y_RATIO
 
         click(self.windowId, refreshX, refreshY)
-        time.sleep(DEFAULT_ACTION_DELAY)
+        time.sleep(DEFAULT_ACTION_DELAY + 0.3)
         self.clickConfirmRefresh()
         self.refreshCount += 1
         self.notifyObservers()
@@ -122,23 +129,19 @@ class E7X11ShopRefresh:
         time.sleep(DEFAULT_ACTION_DELAY)
 
         screenshotBottom = takeScreenshot(self.windowId)
-        self.searchBuyItems(screenshotBottom)
+        self.searchBuyItems(screenshotBottom, startYRatio=BOTTOM_ITEM_SEARCH_START_Y_RATIO)
 
         time.sleep(DEFAULT_ACTION_DELAY)
         self.refreshShop()
 
-    def start(self, budget: Optional[int] = None) -> None:
+    def start(self, skystones) -> None:
         self.loopActive = True
-        maxRefreshes = (budget // 3) if budget is not None else 1
+        cycles: int = skystones // SKYSTONES_PER_REFRESH
 
-        while self.loopActive:
+        while self.loopActive and cycles is not None and cycles > 0:
             self.performRefreshCycle()
 
-            if maxRefreshes is not None and self.refreshCount >= maxRefreshes:
-                self.loopActive = False
-                break
-
-            if budget is None:
+            if self.refreshCount >= cycles:
                 self.loopActive = False
                 break
 
@@ -150,5 +153,5 @@ class E7X11ShopRefresh:
 if __name__ == "__main__":
     windowId = 18874377
     refresher = E7X11ShopRefresh(windowId)
-    refresher.start(6)
+    refresher.start(2)
 
