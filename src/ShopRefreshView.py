@@ -105,7 +105,7 @@ class ShopRefreshView(QWidget):
         leftTitle.setObjectName("cardTitleLabel")
         leftLayout.addWidget(leftTitle)
 
-        self.expRefreshesLabel = self.createStatItem(leftLayout, "Refreshes", COLOR_SKYSTONES)
+        self.expRefreshesLabel = self.createStatItem(leftLayout, "Skystones", COLOR_SKYSTONES)
         self.expGoldLabel = self.createStatItem(leftLayout, "Gold", COLOR_GOLD)
         self.expCovLabel = self.createStatItem(leftLayout, "Covenants", COLOR_COVENANTS)
         self.expMysLabel = self.createStatItem(leftLayout, "Mystics", COLOR_MYSTICS)
@@ -122,7 +122,7 @@ class ShopRefreshView(QWidget):
         rightTitle.setObjectName("cardTitleLabel")
         rightLayout.addWidget(rightTitle)
 
-        self.liveRefreshesLabel = self.createStatItem(rightLayout, "Refreshes", COLOR_SKYSTONES)
+        self.liveRefreshesLabel = self.createStatItem(rightLayout, "Skystones", COLOR_SKYSTONES)
         self.liveGoldLabel = self.createStatItem(rightLayout, "Gold", COLOR_GOLD)
         self.liveCovLabel = self.createStatItem(rightLayout, "Covenants", COLOR_COVENANTS)
         self.liveMysLabel = self.createStatItem(rightLayout, "Mystics", COLOR_MYSTICS)
@@ -191,12 +191,12 @@ class ShopRefreshView(QWidget):
 
         self.summaryBadge.setText(self.viewModel.getPlannedRefreshesText())
 
-        self.expRefreshesLabel.setText(f"{self.viewModel.targetCycles:,}")
+        self.expRefreshesLabel.setText(f"{self.viewModel.skystonesInput:,}")
         self.expGoldLabel.setText(f"{self.viewModel.expectedGold:,}")
         self.expCovLabel.setText(f"{self.viewModel.expectedCovenants:,}")
         self.expMysLabel.setText(f"{self.viewModel.expectedMystics:,}")
 
-        self.liveRefreshesLabel.setText(f"{self.viewModel.currentRefreshCount:,}")
+        self.liveRefreshesLabel.setText(f"{self.viewModel.skystonesSpent:,}")
         self.liveGoldLabel.setText(f"{self.viewModel.goldSpent:,}")
         self.liveCovLabel.setText(f"{self.viewModel.covenantsPurchased:,}")
         self.liveMysLabel.setText(f"{self.viewModel.mysticsPurchased:,}")
