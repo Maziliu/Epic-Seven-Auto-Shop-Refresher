@@ -6,6 +6,7 @@ from PyQt6.QtGui import QGuiApplication
 
 from Style import APP_TITLE, get_app_icon, get_app_stylesheet
 from ShopRefreshService import ShopRefreshService
+from CurrencyService import CurrencyService
 from ShopRefreshViewModel import ShopRefreshViewModel
 from ShopRefreshView import ShopRefreshView
 from WindowSelectorView import WindowSelectorView
@@ -35,13 +36,6 @@ class MainWindow(QMainWindow):
             y = (geo.height() - self.height()) // 2
             self.move(x, y)
 
-    def closeEvent(self, event) -> None:
-        try:
-            self.viewModel.stopRefresh()
-        except Exception:
-            pass
-        event.accept()
-
 
 def main() -> None:
     app = QApplication(sys.argv)
@@ -62,7 +56,8 @@ def main() -> None:
         sys.exit(0)
 
     refreshService = ShopRefreshService(selectedWindowId)
-    viewModel = ShopRefreshViewModel(refreshService)
+    currencyService = CurrencyService(selectedWindowId)
+    viewModel = ShopRefreshViewModel(refreshService, currencyService)
 
     mainWindow = MainWindow(viewModel)
     mainWindow.show()

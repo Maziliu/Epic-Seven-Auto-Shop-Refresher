@@ -1,6 +1,7 @@
 from typing import Optional
 from PyQt6.QtCore import QObject, pyqtSignal
 from ShopRefreshService import ShopRefreshService
+from CurrencyService import CurrencyService
 
 GOLD_COST_PER_COVENANT = 184000
 GOLD_COST_PER_MYSTIC = 280000
@@ -30,11 +31,17 @@ class ShopRefreshViewModel(QObject):
     progressChanged = pyqtSignal(int)
     runningStateChanged = pyqtSignal(bool)
 
-    def __init__(self, shopRefreshService: ShopRefreshService):
+    def __init__(
+        self,
+        shopRefreshService: ShopRefreshService,
+        currencyService: Optional[CurrencyService] = None,
+    ):
         super().__init__()
         self.shopRefreshService = shopRefreshService
         self.shopRefreshService.attachObserver(self.onShopRefresh)
         self.shopRefreshService.setOnServiceCompletionCallback(self.onServiceCompletion)
+
+        self.currencyService = currencyService
 
         self.skystonesInput: int = 0
         self.targetCycles: int = 0
@@ -73,7 +80,33 @@ class ShopRefreshViewModel(QObject):
     def isValidSkystoneAmount(self) -> bool:
         return self.skystonesInput >= SKYSTONES_PER_REFRESH
 
+    def isSkyStoneAmountEmpty(self) -> bool:
+        return self.skystonesInput == 0
+
+    def extractSkystones(self) -> None:
+        if not self.currencyService:
+            return
+        result = self.currencyService.extractCurrencies()
+        if not result:
+            return
+        gold, skystones = result
+        if convertToGoldCost(skystones) <= gold:
+            maxSkystones = skystones
+        else:
+            goldCostPerSkyStone = (
+                EXPECTED_COVENANT_YIELD_PER_SKYSTONE * GOLD_COST_PER_COVENANT
+                + EXPECTED_MYSTIC_YIELD_PER_SKYSTONE * GOLD_COST_PER_MYSTIC
+            )
+            maxSkystones = int(gold / goldCostPerSkyStone)
+
+            while convertToGoldCost(maxSkystones) > gold:
+                maxSkystones -= SKYSTONES_PER_REFRESH
+        self.setSkystones(maxSkystones)
+
     def startRefresh(self) -> None:
+        if self.isSkyStoneAmountEmpty():
+            self.extractSkystones()
+
         if not self.isValidSkystoneAmount() or self.isRunning:
             return
 

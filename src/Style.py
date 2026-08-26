@@ -1,8 +1,12 @@
+import sys
 import os
 from PyQt6.QtGui import QIcon
 
-SRC_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
-ASSETS_DIRECTORY = os.path.join(SRC_DIRECTORY, "..", "assets")
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    ASSETS_DIRECTORY = os.path.join(sys._MEIPASS, "assets")
+else:
+    SRC_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+    ASSETS_DIRECTORY = os.path.join(SRC_DIRECTORY, "..", "assets")
 
 APP_TITLE = "Epic Seven Auto Shop Refresher"
 
@@ -30,7 +34,7 @@ def get_app_stylesheet() -> str:
     QMainWindow, QDialog, QWidget {
         background-color: #18181b;
         color: rgba(250, 250, 250, 0.9);
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+        font-family: "Outfit", sans-serif;
         font-size: 14px;
     }
 

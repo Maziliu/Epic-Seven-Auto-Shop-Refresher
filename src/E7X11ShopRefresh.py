@@ -1,3 +1,4 @@
+import sys
 import os
 import time
 from typing import Callable, Optional, Tuple
@@ -14,7 +15,10 @@ from X11Utilities import (
     takeScreenshot,
 )
 
-ASSETS_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    ASSETS_DIRECTORY = os.path.join(sys._MEIPASS, "assets")
+else:
+    ASSETS_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
 
 CONFIRM_BUTTON_X_RATIO: float = 0.58
 CONFIRM_BUTTON_Y_RATIO: float = 0.65
@@ -102,7 +106,7 @@ class E7X11ShopRefresh:
                 raise FileNotFoundError()
 
             itemPosition = findClickPosition(searchRegion, imagePath)
-            print(f"Checking {key}, Position: {itemPosition}")
+            # print(f"Checking {key}, Position: {itemPosition}")
             if itemPosition is None:
                 continue
 

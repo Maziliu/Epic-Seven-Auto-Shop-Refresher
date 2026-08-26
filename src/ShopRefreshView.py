@@ -122,7 +122,7 @@ class ShopRefreshView(QWidget):
         rightTitle.setObjectName("cardTitleLabel")
         rightLayout.addWidget(rightTitle)
 
-        self.liveRefreshesLabel = self.createStatItem(rightLayout, "Refreshes Done", COLOR_SKYSTONES)
+        self.liveRefreshesLabel = self.createStatItem(rightLayout, "Refreshes", COLOR_SKYSTONES)
         self.liveGoldLabel = self.createStatItem(rightLayout, "Gold", COLOR_GOLD)
         self.liveCovLabel = self.createStatItem(rightLayout, "Covenants", COLOR_COVENANTS)
         self.liveMysLabel = self.createStatItem(rightLayout, "Mystics", COLOR_MYSTICS)
