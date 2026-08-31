@@ -3,13 +3,14 @@ from PIL import Image
 import cv2
 import easyocr
 import numpy as np
+import torch
 from X11Utilities import takeScreenshot
 
 
 class CurrencyService:
     def __init__(self, windowId: int):
         self.windowId = windowId
-        self.reader = easyocr.Reader(["en"], gpu=False)
+        self.reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
 
     def extractCurrencies(self) -> Optional[Tuple[int, int]]:
         screenshot = takeScreenshot(self.windowId)
